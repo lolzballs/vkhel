@@ -4,6 +4,7 @@ dep_vulkan = dependency('vulkan', required: true)
 
 sources = files([
   'src/vkhel.c',
+  'src/vulkan.c',
 ])
 
 subdir('src/shaders')

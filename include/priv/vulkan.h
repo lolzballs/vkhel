@@ -1,5 +1,5 @@
-#ifndef PRIV_VKHEL_H
-#define PRIV_VKHEL_H
+#ifndef PRIV_VULKAN_H
+#define PRIV_VULKAN_H
 
 #include <vulkan/vulkan.h>
 
@@ -16,8 +16,7 @@ struct vulkan_ctx {
 	uint32_t device_local_memory_index;
 };
 
-struct vkhel_ctx {
-	struct vulkan_ctx vk;
-};
+struct vulkan_ctx *vulkan_ctx_init(struct vulkan_ctx *ini);
+void vulkan_ctx_finish(struct vulkan_ctx *ctx);
 
 #endif

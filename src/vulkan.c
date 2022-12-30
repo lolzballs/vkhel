@@ -164,3 +164,13 @@ void vulkan_ctx_finish(struct vulkan_ctx *ctx) {
     vkDestroyInstance(ctx->instance, NULL);
     ctx->instance = VK_NULL_HANDLE;
 }
+
+void vulkan_ctx_create_fence(struct vulkan_ctx *vk, VkFence *fence,
+		bool signaled) {
+	VkFenceCreateInfo create_info = {
+		.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+		.flags = signaled ? VK_FENCE_CREATE_SIGNALED_BIT : 0,
+	};
+	VkResult res = vkCreateFence(vk->device, &create_info, NULL, fence);
+	assert(res == VK_SUCCESS);
+}

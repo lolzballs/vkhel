@@ -1,4 +1,5 @@
 vulkan_shaders_src = [
+  'elemadd.comp',
 ]
 
 glslang = find_program('glslangValidator', native: true, required: true)

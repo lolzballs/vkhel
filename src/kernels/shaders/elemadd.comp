@@ -1,0 +1,26 @@
+#version 460
+#extension GL_ARB_gpu_shader_int64 : enable
+
+layout(local_size_x = 64) in;
+
+layout(binding = 0) readonly buffer input_buffer {
+	uint64_t vec[];
+} inputs[2];
+
+layout(binding = 1) writeonly buffer out_c {
+	uint64_t c[];
+};
+
+layout(push_constant) uniform constants {
+	uint64_t length;
+	uint64_t mod;
+};
+
+void main() {
+    if (gl_GlobalInvocationID.x >= length) {
+        return;
+    }
+
+    uint pos = gl_GlobalInvocationID.x;
+    c[pos] = (inputs[0].vec[pos] + inputs[1].vec[pos]) % 5;
+}

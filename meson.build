@@ -3,12 +3,13 @@ project('vkhel', 'c')
 dep_vulkan = dependency('vulkan', required: true)
 
 sources = files([
+  'src/kernels/elemadd.c',
   'src/vector.c',
   'src/vkhel.c',
   'src/vulkan.c',
 ])
 
-subdir('src/shaders')
+subdir('src/kernels/shaders')
 
 vkhel_deps = [dep_vulkan]
 vkhel_incs = include_directories('include')

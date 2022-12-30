@@ -15,4 +15,7 @@ void vkhel_vector_copy_from_host(struct vkhel_vector *, uint64_t *);
 void vkhel_vector_map(struct vkhel_vector *, void **, size_t);
 void vkhel_vector_unmap(struct vkhel_vector *);
 
+void vkhel_vector_elemadd(struct vkhel_vector *a, struct vkhel_vector *b,
+		struct vkhel_vector *c, uint64_t mod);
+
 #endif

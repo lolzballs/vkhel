@@ -1,5 +1,19 @@
 #include <assert.h>
+#include <inttypes.h>
+#include <stdio.h>
 #include "vkhel/vkhel.h"
+
+static void print_vector(struct vkhel_vector *vec, size_t vec_length) {
+	uint64_t *mapped;
+	vkhel_vector_map(vec, (void **) &mapped, vec_length);
+	printf("{");
+	for (size_t i = 0; i < vec_length; i++) {
+		printf("%" PRIu64 ", ", mapped[i]);
+	}
+	printf("}\n");
+	vkhel_vector_unmap(vec);
+
+}
 
 int main() {
 	struct vkhel_ctx *ctx = vkhel_ctx_create();
@@ -27,6 +41,11 @@ int main() {
 		assert(b_map[i] == b_elements[i]);
 	}
 	vkhel_vector_unmap(b);
+
+	struct vkhel_vector *c = vkhel_vector_create(ctx, vector_len);
+	vkhel_vector_elemadd(a, b, c, 17);
+	print_vector(c, vector_len);
+	vkhel_vector_destroy(c);
 
 	vkhel_vector_destroy(a);
 	vkhel_vector_destroy(b);

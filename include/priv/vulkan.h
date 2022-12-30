@@ -4,6 +4,25 @@
 #include <stdbool.h>
 #include <vulkan/vulkan.h>
 
+struct vulkan_ctx;
+
+struct vulkan_kernel {
+	VkDescriptorSetLayout set_layout;
+	VkPipelineLayout pipeline_layout;
+	VkPipeline pipeline;
+	VkShaderModule shader;
+};
+
+enum vulkan_kernel_type {
+	VULKAN_KERNEL_TYPE_ELEMADD = 0,
+	VULKAN_KERNEL_TYPE_MAX,
+};
+
+struct vulkan_execution {
+	VkDescriptorPool descriptor_pool;
+	VkCommandBuffer cmd_buffer;
+};
+
 struct vulkan_ctx {
     VkInstance instance;
     VkPhysicalDevice physical_device;
@@ -15,11 +34,18 @@ struct vulkan_ctx {
 	VkPhysicalDeviceMemoryProperties memory_properties;
 	uint32_t host_visible_memory_index;
 	uint32_t device_local_memory_index;
+
+	VkCommandPool cmd_pool;
+	struct vulkan_kernel kernels[VULKAN_KERNEL_TYPE_MAX];
 };
 
 struct vulkan_ctx *vulkan_ctx_init(struct vulkan_ctx *ini);
 void vulkan_ctx_finish(struct vulkan_ctx *ctx);
 void vulkan_ctx_create_fence(struct vulkan_ctx *vk, VkFence *fence,
 		bool signaled);
+void vulkan_ctx_execution_begin(struct vulkan_ctx *vk,
+		struct vulkan_execution *execution);
+void vulkan_ctx_execution_end(struct vulkan_ctx *vk,
+		struct vulkan_execution *execution, VkFence fence);
 
 #endif

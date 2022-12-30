@@ -1,8 +1,21 @@
 #include <assert.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include "priv/kernels/elemadd.h"
 #include "priv/vulkan.h"
+
+typedef void (*vulkan_kernel_init_fn)(struct vulkan_ctx *);
+static const vulkan_kernel_init_fn vulkan_kernel_inits[VULKAN_KERNEL_TYPE_MAX] = {
+	[VULKAN_KERNEL_TYPE_ELEMADD] = vulkan_kernel_elemadd_init,
+};
+
+static void vulkan_kernel_finish(struct vulkan_ctx *vk,
+		struct vulkan_kernel *kernel) {
+	vkDestroyDescriptorSetLayout(vk->device, kernel->set_layout, NULL);
+	vkDestroyPipelineLayout(vk->device, kernel->pipeline_layout, NULL);
+	vkDestroyPipeline(vk->device, kernel->pipeline, NULL);
+	vkDestroyShaderModule(vk->device, kernel->shader, NULL);
+}
 
 static uint32_t find_compute_queue(VkPhysicalDevice device) {
     uint32_t count = 8;
@@ -151,10 +164,29 @@ struct vulkan_ctx *vulkan_ctx_init(struct vulkan_ctx *ini) {
 	ini->host_visible_memory_index = find_memory_index(&ini->memory_properties,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
+	VkCommandPoolCreateInfo cmd_pool_create_info = {
+		.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+		.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT,
+		.queueFamilyIndex = ini->queue_family_index,
+	};
+	vkCreateCommandPool(ini->device, &cmd_pool_create_info, NULL,
+			&ini->cmd_pool);
+
+	/* initialize kernels */
+	for (size_t i = 0; i < VULKAN_KERNEL_TYPE_MAX; i++) {
+		vulkan_kernel_inits[i](ini);
+	}
+
     return ini;
 }
 
 void vulkan_ctx_finish(struct vulkan_ctx *ctx) {
+	for (size_t i = 0; i < VULKAN_KERNEL_TYPE_MAX; i++) {
+		vulkan_kernel_finish(ctx, &ctx->kernels[i]);
+	}
+
+	vkDestroyCommandPool(ctx->device, ctx->cmd_pool, NULL);
+
     ctx->queue = VK_NULL_HANDLE;
     ctx->physical_device = VK_NULL_HANDLE;
 
@@ -173,4 +205,56 @@ void vulkan_ctx_create_fence(struct vulkan_ctx *vk, VkFence *fence,
 	};
 	VkResult res = vkCreateFence(vk->device, &create_info, NULL, fence);
 	assert(res == VK_SUCCESS);
+}
+
+void vulkan_ctx_execution_begin(struct vulkan_ctx *vk,
+		struct vulkan_execution *execution) {
+	VkResult res = VK_ERROR_UNKNOWN;
+
+	VkCommandBufferAllocateInfo cmd_buffer_allocate_info = {
+		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+		.commandPool = vk->cmd_pool,
+		.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+		.commandBufferCount = 1,
+	};
+	res = vkAllocateCommandBuffers(vk->device, &cmd_buffer_allocate_info,
+			&execution->cmd_buffer);
+	assert(res == VK_SUCCESS);
+
+	VkDescriptorPoolCreateInfo descriptor_pool_create_info = {
+		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+		.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
+		.maxSets = 1,
+		.poolSizeCount = 1,
+		.pPoolSizes = &(const VkDescriptorPoolSize) {
+			.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+			.descriptorCount = 3,
+		},
+	};
+	res = vkCreateDescriptorPool(vk->device, &descriptor_pool_create_info,
+			NULL, &execution->descriptor_pool);
+	assert(res == VK_SUCCESS);
+
+	VkCommandBufferBeginInfo begin_info = {
+		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+		.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+	};
+	res = vkBeginCommandBuffer(execution->cmd_buffer, &begin_info);
+	assert(res == VK_SUCCESS);
+}
+
+void vulkan_ctx_execution_end(struct vulkan_ctx *vk,
+		struct vulkan_execution *execution,
+		VkFence fence) {
+	VkResult res = VK_ERROR_UNKNOWN;
+
+	res = vkEndCommandBuffer(execution->cmd_buffer);
+	assert(res == VK_SUCCESS);
+
+	VkSubmitInfo submit_info = {
+		.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+		.commandBufferCount = 1,
+		.pCommandBuffers = &execution->cmd_buffer,
+	};
+	vkQueueSubmit(vk->queue, 1, &submit_info, fence);
 }

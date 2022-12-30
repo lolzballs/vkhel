@@ -22,5 +22,5 @@ void main() {
     }
 
     uint pos = gl_GlobalInvocationID.x;
-    c[pos] = (inputs[0].vec[pos] + inputs[1].vec[pos]) % 5;
+    c[pos] = (inputs[0].vec[pos] + inputs[1].vec[pos]) % mod;
 }

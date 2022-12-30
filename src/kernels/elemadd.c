@@ -1,7 +1,5 @@
 #include <assert.h>
-#include "priv/vector.h"
-#include "priv/vulkan.h"
-#include "priv/kernels/elemadd.h"
+#include "priv/vkhel.h"
 #include "elemadd.comp.h"
 
 struct push_constants {
@@ -159,5 +157,5 @@ void vulkan_kernel_elemadd_record(
 			VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(struct push_constants),
 			&push);
 
-	vkCmdDispatch(execution->cmd_buffer, (c->length + 63) / 64, 1, 1);
+	vkCmdDispatch(execution->cmd_buffer, DIV_CEIL(c->length, 64), 1, 1);
 }

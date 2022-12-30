@@ -30,6 +30,8 @@ struct vkhel_vector *vkhel_vector_create(struct vkhel_ctx *ctx,
 	res = vkCreateBuffer(ctx->vk.device, &create_info, NULL, &ini->buffer);
 	assert(res == VK_SUCCESS);
 
+	vkBindBufferMemory(ctx->vk.device, ini->buffer, ini->memory, 0);
+
 	return ini;
 }
 

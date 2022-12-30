@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <string.h>
 #include "priv/kernels/elemadd.h"
 #include "priv/vkhel.h"
 #include "priv/vector.h"
@@ -46,9 +47,7 @@ void vkhel_vector_destroy(struct vkhel_vector *vector) {
 void vkhel_vector_copy_from_host(struct vkhel_vector *vector, uint64_t *e) {
 	uint64_t *mapped;
 	vkhel_vector_map(vector, (void **) &mapped, vector->length);
-	for (size_t i = 0; i < vector->length; i++) {
-		mapped[i] = e[i];
-	}
+	memcpy(mapped, e, vector->length * sizeof(uint64_t));
 	vkhel_vector_unmap(vector);
 }
 

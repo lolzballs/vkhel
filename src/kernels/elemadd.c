@@ -2,6 +2,8 @@
 #include "priv/vkhel.h"
 #include "elemadd.comp.h"
 
+#define SHADER_LOCAL_SIZE_X 64
+
 struct push_constants {
 	uint64_t length;
 	uint64_t mod;
@@ -102,7 +104,7 @@ void vulkan_kernel_elemadd_record(
 			&descriptor_set);
 	assert(res == VK_SUCCESS);
 
-	VkWriteDescriptorSet write_descriptor_sets[] = {
+	const VkWriteDescriptorSet write_descriptor_sets[] = {
 		{
 			.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
 			.dstSet = descriptor_set,
@@ -149,7 +151,7 @@ void vulkan_kernel_elemadd_record(
 			VK_PIPELINE_BIND_POINT_COMPUTE,
 			kernel->pipeline_layout, 0, 1, &descriptor_set, 0, NULL);
 
-	struct push_constants push = {
+	const struct push_constants push = {
 		.length = c->length,
 		.mod = mod,
 	};
@@ -157,5 +159,6 @@ void vulkan_kernel_elemadd_record(
 			VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(struct push_constants),
 			&push);
 
-	vkCmdDispatch(execution->cmd_buffer, DIV_CEIL(c->length, 64), 1, 1);
+	vkCmdDispatch(execution->cmd_buffer,
+			DIV_CEIL(c->length, SHADER_LOCAL_SIZE_X), 1, 1);
 }

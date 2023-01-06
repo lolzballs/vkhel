@@ -24,7 +24,10 @@ struct vkhel_vector *vkhel_vector_create(struct vkhel_ctx *ctx,
 		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
 		.flags = 0,
 		.size = length * sizeof(uint64_t),
-		.usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+		.usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
+			| VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT
+			| VK_BUFFER_USAGE_TRANSFER_SRC_BIT
+			| VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 		.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
 		.queueFamilyIndexCount = 1,
 		.pQueueFamilyIndices = &ctx->vk.queue_family_index,
@@ -42,6 +45,56 @@ void vkhel_vector_destroy(struct vkhel_vector *vector) {
 	vkDestroyBuffer(ctx->vk.device, vector->buffer, NULL);
 	vkFreeMemory(ctx->vk.device, vector->memory, NULL);
 	free(vector);
+}
+
+struct vkhel_vector *vkhel_vector_dup(struct vkhel_vector *src) {
+	VkResult res;
+
+	struct vkhel_ctx *ctx = src->ctx;
+	struct vkhel_vector *new = vkhel_vector_create(src->ctx, src->length);
+
+	VkFence fence;
+	vulkan_ctx_create_fence(&ctx->vk, &fence, false);
+
+	VkCommandBuffer cmd_buffer;
+	VkCommandBufferAllocateInfo allocate_info = {
+		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+		.commandPool = ctx->vk.cmd_pool,
+		.commandBufferCount = 1,
+		.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+	};
+	res = vkAllocateCommandBuffers(ctx->vk.device, &allocate_info, &cmd_buffer);
+	assert(res == VK_SUCCESS);
+
+	VkCommandBufferBeginInfo begin_info = {
+		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+		.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+	};
+	res = vkBeginCommandBuffer(cmd_buffer, &begin_info);
+	assert(res == VK_SUCCESS);
+
+	VkBufferCopy region = {
+		.srcOffset = 0,
+		.dstOffset = 0,
+		.size = src->length * sizeof(uint64_t),
+	};
+	vkCmdCopyBuffer(cmd_buffer, src->buffer, new->buffer, 1, &region);
+
+	res = vkEndCommandBuffer(cmd_buffer);
+	assert(res == VK_SUCCESS);
+
+	VkSubmitInfo submit = {
+		.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+		.commandBufferCount = 1,
+		.pCommandBuffers = &cmd_buffer,
+	};
+	res = vkQueueSubmit(ctx->vk.queue, 1, &submit, fence);
+
+	vkWaitForFences(ctx->vk.device, 1, &fence, true, -1);
+	vkDestroyFence(ctx->vk.device, fence, NULL);
+
+	vkFreeCommandBuffers(ctx->vk.device, ctx->vk.cmd_pool, 1, &cmd_buffer);
+	return new;
 }
 
 void vkhel_vector_copy_from_host(struct vkhel_vector *vector, uint64_t *e) {

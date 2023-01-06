@@ -97,7 +97,8 @@ struct vkhel_vector *vkhel_vector_dup(struct vkhel_vector *src) {
 	return new;
 }
 
-void vkhel_vector_copy_from_host(struct vkhel_vector *vector, uint64_t *e) {
+void vkhel_vector_copy_from_host(struct vkhel_vector *vector,
+		const uint64_t *e) {
 	uint64_t *mapped;
 	vkhel_vector_map(vector, (void **) &mapped, vector->length);
 	memcpy(mapped, e, vector->length * sizeof(uint64_t));

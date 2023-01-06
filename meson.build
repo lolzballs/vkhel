@@ -28,3 +28,4 @@ vkhel = declare_dependency(
 )
 
 subdir('examples')
+subdir('test')

@@ -65,6 +65,30 @@ void test_elemadd() {
 	vkhel_vector_destroy(b);
 }
 
+void test_elemgtadd() {
+	const size_t vector_len = 10;
+	const uint64_t a_elements[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+
+	struct vkhel_vector *a = vkhel_vector_create(g_ctx, vector_len);
+	vkhel_vector_copy_from_host(a, a_elements);
+
+	/* > 5, + 10 */
+	const uint64_t c_expected[] = { 1, 2, 3, 4, 5, 16, 17, 18, 19, 20 };
+	struct vkhel_vector *c = vkhel_vector_create(g_ctx, vector_len);
+	vkhel_vector_elemgtadd(a, c, 5, 10);
+	assert_vector_contents_equal(c, c_expected, vector_len);
+	vkhel_vector_destroy(c);
+
+	/* > 2, + 2 */
+	const uint64_t d_expected[] = { 1, 2, 5, 6, 7, 8, 9, 10, 11, 12 };
+	struct vkhel_vector *d = vkhel_vector_create(g_ctx, vector_len);
+	vkhel_vector_elemgtadd(a, d, 2, 2);
+	assert_vector_contents_equal(d, d_expected, vector_len);
+	vkhel_vector_destroy(d);
+
+	vkhel_vector_destroy(a);
+}
+
 void test_dup() {
 	const size_t vector_len = 64;
 	uint64_t elements[vector_len];
@@ -87,6 +111,7 @@ int main() {
 
 	RUN_TEST(copy_from_host);
 	RUN_TEST(elemadd);
+	RUN_TEST(elemgtadd);
 	RUN_TEST(dup);
 
 	vkhel_ctx_destroy(g_ctx);

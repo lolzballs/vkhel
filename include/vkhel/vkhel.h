@@ -18,5 +18,8 @@ void vkhel_vector_unmap(struct vkhel_vector *);
 
 void vkhel_vector_elemadd(struct vkhel_vector *a, struct vkhel_vector *b,
 		struct vkhel_vector *c, uint64_t mod);
+void vkhel_vector_elemgtadd(struct vkhel_vector *operand,
+		struct vkhel_vector *result,
+		uint64_t bound, uint64_t diff);
 
 #endif

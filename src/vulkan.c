@@ -2,11 +2,13 @@
 #include <stdio.h>
 #include <string.h>
 #include "priv/kernels/elemadd.h"
+#include "priv/kernels/elemgtadd.h"
 #include "priv/vulkan.h"
 
 typedef void (*vulkan_kernel_init_fn)(struct vulkan_ctx *);
 static const vulkan_kernel_init_fn vulkan_kernel_inits[VULKAN_KERNEL_TYPE_MAX] = {
 	[VULKAN_KERNEL_TYPE_ELEMADD] = vulkan_kernel_elemadd_init,
+	[VULKAN_KERNEL_TYPE_ELEMGTADD] = vulkan_kernel_elemgtadd_init,
 };
 
 static void vulkan_kernel_finish(struct vulkan_ctx *vk,

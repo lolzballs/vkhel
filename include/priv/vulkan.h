@@ -15,6 +15,7 @@ struct vulkan_kernel {
 
 enum vulkan_kernel_type {
 	VULKAN_KERNEL_TYPE_ELEMADD = 0,
+	VULKAN_KERNEL_TYPE_ELEMGTADD = 1,
 	VULKAN_KERNEL_TYPE_MAX,
 };
 

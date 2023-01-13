@@ -4,6 +4,7 @@ dep_vulkan = dependency('vulkan', required: true)
 
 sources = files([
   'src/kernels/elemadd.c',
+  'src/kernels/elemgtadd.c',
   'src/vector.c',
   'src/vkhel.c',
   'src/vulkan.c',

@@ -13,14 +13,6 @@ struct vkhel_vector *vkhel_vector_create(struct vkhel_ctx *ctx,
 
 	VkResult res;
 
-	VkMemoryAllocateInfo allocate_info = {
-		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-		.allocationSize = length * sizeof(uint64_t),
-		.memoryTypeIndex = ctx->vk.host_visible_memory_index,
-	};
-	res = vkAllocateMemory(ctx->vk.device, &allocate_info, NULL, &ini->memory);
-	assert(res == VK_SUCCESS);
-
 	VkBufferCreateInfo create_info = {
 		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
 		.flags = 0,
@@ -34,6 +26,18 @@ struct vkhel_vector *vkhel_vector_create(struct vkhel_ctx *ctx,
 		.pQueueFamilyIndices = &ctx->vk.queue_family_index,
 	};
 	res = vkCreateBuffer(ctx->vk.device, &create_info, NULL, &ini->buffer);
+	assert(res == VK_SUCCESS);
+
+	VkMemoryRequirements memory_requirements;
+	vkGetBufferMemoryRequirements(ctx->vk.device, ini->buffer,
+			&memory_requirements);
+
+	VkMemoryAllocateInfo allocate_info = {
+		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+		.allocationSize = memory_requirements.size,
+		.memoryTypeIndex = ctx->vk.host_visible_memory_index,
+	};
+	res = vkAllocateMemory(ctx->vk.device, &allocate_info, NULL, &ini->memory);
 	assert(res == VK_SUCCESS);
 
 	vkBindBufferMemory(ctx->vk.device, ini->buffer, ini->memory, 0);

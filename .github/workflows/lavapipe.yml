@@ -1,0 +1,33 @@
+name: "lavapipe sanity"
+on:
+  workflow_dispatch:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - name: Install Vulkan and Mesa Vulkan drivers
+        run: |
+          sudo apt-get update
+          sudo apt-get install libvulkan-dev glslang-tools \
+          vulkan-validationlayers mesa-vulkan-drivers
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - run: pip install meson ninja
+      - run: meson setup builddir/
+        env:
+          CC: gcc
+      - run: meson test -C builddir/ -v
+        env:
+          VK_ICD_FILENAMES: /usr/share/vulkan/icd.d/lvp_icd.x86_64.json
+      - uses: actions/upload-artifact@v1
+        if: failure()
+        with:
+          name: ubuntu_lavapipe_meson_testlog
+          path: builddir/meson-logs/testlog.txt

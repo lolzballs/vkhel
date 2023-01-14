@@ -1,6 +1,6 @@
 #include <assert.h>
 #include "priv/vkhel.h"
-#include "elemadd.comp.h"
+#include "elemmul.comp.h"
 
 #define SHADER_LOCAL_SIZE_X 64
 
@@ -17,8 +17,8 @@ static const VkPushConstantRange push_constants_range = {
 
 static const VkShaderModuleCreateInfo shader_module_create_info = {
 	.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-	.pCode = elemadd_comp_data,
-	.codeSize = sizeof(elemadd_comp_data),
+	.pCode = elemmul_comp_data,
+	.codeSize = sizeof(elemmul_comp_data),
 };
 
 static const VkDescriptorSetLayoutBinding descriptor_bindings[] = {
@@ -45,8 +45,8 @@ static const VkDescriptorSetLayoutCreateInfo descriptor_set_create_info = {
 	.pBindings = descriptor_bindings,
 };
 
-void vulkan_kernel_elemadd_init(struct vulkan_ctx *vk) {
-	struct vulkan_kernel *ini = &vk->kernels[VULKAN_KERNEL_TYPE_ELEMADD];
+void vulkan_kernel_elemmul_init(struct vulkan_ctx *vk) {
+	struct vulkan_kernel *ini = &vk->kernels[VULKAN_KERNEL_TYPE_ELEMMUL];
 	VkResult res = VK_ERROR_UNKNOWN;
 
 	res = vkCreateShaderModule(vk->device, &shader_module_create_info, NULL,
@@ -85,12 +85,12 @@ void vulkan_kernel_elemadd_init(struct vulkan_ctx *vk) {
 	assert(res == VK_SUCCESS);
 }
 
-void vulkan_kernel_elemadd_record(
+void vulkan_kernel_elemmul_record(
 		struct vulkan_ctx *vk,
 		struct vulkan_kernel *kernel,
 		struct vulkan_execution *execution,
-		struct vkhel_vector *a, struct vkhel_vector *b,
-		struct vkhel_vector *c, uint64_t mod) {
+		struct vkhel_vector *result,
+		struct vkhel_vector *a, struct vkhel_vector *b, uint64_t mod) {
 	VkResult res = VK_ERROR_UNKNOWN;
 
 	VkDescriptorSet descriptor_set;
@@ -134,9 +134,9 @@ void vulkan_kernel_elemadd_record(
 			.descriptorCount = 1,
 			.pBufferInfo = (const VkDescriptorBufferInfo[]) {
 				{
-					.buffer = c->buffer,
+					.buffer = result->buffer,
 					.offset = 0,
-					.range = c->length * sizeof(uint64_t),
+					.range = result->length * sizeof(uint64_t),
 				},
 			},
 		},
@@ -152,7 +152,7 @@ void vulkan_kernel_elemadd_record(
 			kernel->pipeline_layout, 0, 1, &descriptor_set, 0, NULL);
 
 	const struct push_constants push = {
-		.length = c->length,
+		.length = result->length,
 		.mod = mod,
 	};
 	vkCmdPushConstants(execution->cmd_buffer, kernel->pipeline_layout,
@@ -160,5 +160,5 @@ void vulkan_kernel_elemadd_record(
 			&push);
 
 	vkCmdDispatch(execution->cmd_buffer,
-			DIV_CEIL(c->length, SHADER_LOCAL_SIZE_X), 1, 1);
+			DIV_CEIL(result->length, SHADER_LOCAL_SIZE_X), 1, 1);
 }

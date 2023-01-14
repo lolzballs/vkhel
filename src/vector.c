@@ -1,6 +1,6 @@
 #include <assert.h>
 #include <string.h>
-#include "priv/kernels/elemadd.h"
+#include "priv/kernels/elemmul.h"
 #include "priv/kernels/elemgtadd.h"
 #include "priv/vkhel.h"
 #include "priv/vector.h"
@@ -120,9 +120,9 @@ void vkhel_vector_unmap(struct vkhel_vector *vector) {
 	vkUnmapMemory(vector->ctx->vk.device, vector->memory);
 }
 
-void vkhel_vector_elemadd(struct vkhel_vector *a, struct vkhel_vector *b,
-		struct vkhel_vector *c, uint64_t mod) {
-	assert(a->ctx == b->ctx && b->ctx == c->ctx);
+void vkhel_vector_elemmul(struct vkhel_vector *a, struct vkhel_vector *b,
+		struct vkhel_vector *result, uint64_t mod) {
+	assert(a->ctx == b->ctx && b->ctx == result->ctx);
 	struct vkhel_ctx *ctx = a->ctx;
 
 	VkFence execution_fence;
@@ -130,9 +130,9 @@ void vkhel_vector_elemadd(struct vkhel_vector *a, struct vkhel_vector *b,
 
 	struct vulkan_execution execution;
 	vulkan_ctx_execution_begin(&ctx->vk, &execution);
-	vulkan_kernel_elemadd_record(&ctx->vk,
-			&ctx->vk.kernels[VULKAN_KERNEL_TYPE_ELEMADD], &execution,
-			a, b, c, mod);
+	vulkan_kernel_elemmul_record(&ctx->vk,
+			&ctx->vk.kernels[VULKAN_KERNEL_TYPE_ELEMMUL], &execution,
+			result, a, b, mod);
 	vulkan_ctx_execution_end(&ctx->vk, &execution, execution_fence);
 
 	vkWaitForFences(ctx->vk.device, 1, &execution_fence, true, -1);

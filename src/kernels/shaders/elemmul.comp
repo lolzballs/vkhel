@@ -7,8 +7,8 @@ layout(binding = 0) readonly buffer input_buffer {
 	uint64_t vec[];
 } inputs[2];
 
-layout(binding = 1) writeonly buffer out_c {
-	uint64_t c[];
+layout(binding = 1) writeonly buffer output_buffer {
+	uint64_t result[];
 };
 
 layout(push_constant) uniform constants {
@@ -22,5 +22,5 @@ void main() {
     }
 
     uint pos = gl_GlobalInvocationID.x;
-    c[pos] = (inputs[0].vec[pos] + inputs[1].vec[pos]) % mod;
+    result[pos] = (inputs[0].vec[pos] * inputs[1].vec[pos]) % mod;
 }

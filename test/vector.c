@@ -36,33 +36,29 @@ void test_copy_from_host() {
 	vkhel_vector_destroy(v);
 }
 
-void test_elemadd() {
-	const size_t vector_len = 4;
-	const uint64_t a_elements[] = { 1, 2, 3, 4 };
-	const uint64_t b_elements[] = { 4, 0, 0, 1 };
+void test_elemmul() {
+	const size_t vector_len = 9;
 
-	struct vkhel_vector *a = vkhel_vector_create(g_ctx, vector_len);
-	vkhel_vector_copy_from_host(a, a_elements);
+	{
+		const uint64_t modulus = 769;
+		const uint64_t a_elements[] = { 1, 2, 3, 1, 1, 1, 0, 1, 0 };
+		const uint64_t b_elements[] = { 1, 1, 1, 1, 2, 3, 1, 0, 0 };
 
-	struct vkhel_vector *b = vkhel_vector_create(g_ctx, vector_len);
-	vkhel_vector_copy_from_host(b, b_elements);
+		struct vkhel_vector *a = vkhel_vector_create(g_ctx, vector_len);
+		vkhel_vector_copy_from_host(a, a_elements);
 
-	/* mod 17 */
-	const uint64_t c_expected[] = { 5, 2, 3, 5 };
-	struct vkhel_vector *c = vkhel_vector_create(g_ctx, vector_len);
-	vkhel_vector_elemadd(a, b, c, 17);
-	assert_vector_contents_equal(c, c_expected, vector_len);
-	vkhel_vector_destroy(c);
+		struct vkhel_vector *b = vkhel_vector_create(g_ctx, vector_len);
+		vkhel_vector_copy_from_host(b, b_elements);
 
-	/* mod 2 */
-	const uint64_t d_expected[] = { 1, 0, 1, 1 };
-	struct vkhel_vector *d = vkhel_vector_create(g_ctx, vector_len);
-	vkhel_vector_elemadd(a, b, d, 2);
-	assert_vector_contents_equal(d, d_expected, vector_len);
-	vkhel_vector_destroy(d);
+		const uint64_t c_expected[] = { 1, 2, 3, 1, 2, 3, 0, 0, 0 };
+		struct vkhel_vector *c = vkhel_vector_create(g_ctx, vector_len);
+		vkhel_vector_elemmul(a, b, c, modulus);
+		assert_vector_contents_equal(c, c_expected, vector_len);
+		vkhel_vector_destroy(c);
 
-	vkhel_vector_destroy(a);
-	vkhel_vector_destroy(b);
+		vkhel_vector_destroy(a);
+		vkhel_vector_destroy(b);
+	}
 }
 
 void test_elemgtadd() {
@@ -110,7 +106,7 @@ int main() {
 	g_ctx = vkhel_ctx_create();
 
 	RUN_TEST(copy_from_host);
-	RUN_TEST(elemadd);
+	RUN_TEST(elemmul);
 	RUN_TEST(elemgtadd);
 	RUN_TEST(dup);
 

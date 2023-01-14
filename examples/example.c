@@ -43,13 +43,13 @@ int main() {
 	vkhel_vector_unmap(b);
 
 	struct vkhel_vector *c = vkhel_vector_create(ctx, vector_len);
-	vkhel_vector_elemadd(a, b, c, 17);
+	vkhel_vector_elemmul(a, b, c, 17);
 	print_vector(c, vector_len);
 
 	struct vkhel_vector *d = vkhel_vector_dup(c);
 	vkhel_vector_destroy(c);
 
-	vkhel_vector_elemadd(a, b, d, 17);
+	vkhel_vector_elemmul(a, b, d, 17);
 	print_vector(d, vector_len);
 	vkhel_vector_destroy(d);
 

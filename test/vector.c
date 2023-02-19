@@ -59,6 +59,39 @@ void test_elemmul() {
 		vkhel_vector_destroy(a);
 		vkhel_vector_destroy(b);
 	}
+
+	{
+		const uint64_t modulus = 1125891450734593;
+		const uint64_t a_elements[] = {
+			706712574074152, 943467560561867, 1115920708919443,
+			515713505356094, 525633777116309, 910766532971356,
+			757086506562426, 799841520990167, 1,
+		};
+		const uint64_t b_elements[] = {
+			515910833966633, 96924929169117, 537587376997453,
+			41829060600750, 205864998008014, 463185427411646,
+			965818279134294, 1075778049568657, 1,
+		};
+
+		struct vkhel_vector *a = vkhel_vector_create(g_ctx, vector_len);
+		vkhel_vector_copy_from_host(a, a_elements);
+
+		struct vkhel_vector *b = vkhel_vector_create(g_ctx, vector_len);
+		vkhel_vector_copy_from_host(b, b_elements);
+
+		const uint64_t c_expected[] = {
+			231838787758587, 618753612121218, 1116345967490421,
+			409735411065439, 25680427818594, 950138933882289,
+			554128714280822, 1465109636753, 1,
+		};
+		struct vkhel_vector *c = vkhel_vector_create(g_ctx, vector_len);
+		vkhel_vector_elemmul(a, b, c, modulus);
+		assert_vector_contents_equal(c, c_expected, vector_len);
+		vkhel_vector_destroy(c);
+
+		vkhel_vector_destroy(a);
+		vkhel_vector_destroy(b);
+	}
 }
 
 void test_elemgtadd() {

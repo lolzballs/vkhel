@@ -4,9 +4,15 @@
 
 #define SHADER_LOCAL_SIZE_X 64
 
+/* barrett reduction: alpha - beta = 64 */
+const int64_t alpha = 62;
+const int64_t beta = -2;
+
 struct push_constants {
 	uint64_t length;
 	uint64_t mod;
+	uint64_t barrett_factor;
+	uint64_t n;
 };
 
 static const VkPushConstantRange push_constants_range = {
@@ -44,6 +50,17 @@ static const VkDescriptorSetLayoutCreateInfo descriptor_set_create_info = {
 		/ sizeof(VkDescriptorSetLayoutBinding),
 	.pBindings = descriptor_bindings,
 };
+
+static uint64_t ceil_log2(uint64_t v) {
+	return 64 - __builtin_clzll(v);
+}
+
+static uint64_t compute_barrett_factor(uint64_t mod, uint64_t n) {
+	assert(n + alpha >= 64);
+	const uint64_t mu_pre_hi = (uint64_t) 1 << (n + alpha - 64);
+	const __uint128_t mu = (((__uint128_t) mu_pre_hi) << 64) / mod;
+	return mu;
+}
 
 void vulkan_kernel_elemmul_init(struct vulkan_ctx *vk) {
 	struct vulkan_kernel *ini = &vk->kernels[VULKAN_KERNEL_TYPE_ELEMMUL];
@@ -151,9 +168,13 @@ void vulkan_kernel_elemmul_record(
 			VK_PIPELINE_BIND_POINT_COMPUTE,
 			kernel->pipeline_layout, 0, 1, &descriptor_set, 0, NULL);
 
+	const uint64_t mod_bits = ceil_log2(mod);
+	const uint64_t barrett_factor = compute_barrett_factor(mod, mod_bits);
 	const struct push_constants push = {
 		.length = result->length,
 		.mod = mod,
+		.barrett_factor = barrett_factor,
+		.n = mod_bits,
 	};
 	vkCmdPushConstants(execution->cmd_buffer, kernel->pipeline_layout,
 			VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(struct push_constants),

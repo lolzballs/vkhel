@@ -5,8 +5,8 @@
 #define SHADER_LOCAL_SIZE_X 64
 
 /* barrett reduction: alpha - beta = 64 */
-const int64_t alpha = 62;
-const int64_t beta = -2;
+static const int64_t alpha = 62;
+static const int64_t beta __attribute__((unused)) = -2;
 
 struct push_constants {
 	uint64_t length;

@@ -1,0 +1,55 @@
+#version 460
+#extension GL_ARB_gpu_shader_int64 : enable
+
+/* TODO: update to share barrett reduction with elemmul */
+const int64_t alpha = 62;
+const int64_t beta = -2;
+
+layout(local_size_x = 64) in;
+
+layout(binding = 0) readonly buffer input_buffer {
+	uint64_t vec[];
+} inputs[2];
+
+layout(binding = 1) writeonly buffer output_buffer {
+	uint64_t result[];
+};
+
+layout(push_constant) uniform constants {
+	uint64_t length;
+	uint64_t mod;
+	uint64_t multiplier;
+	uint64_t barrett_factor;
+	uint64_t n;
+};
+
+void mul64(const uint64_t a, const uint64_t b, out uint64_t hi) {
+	const uint64_t lo_lo = (a & 0xFFFFFFFFu) * (b & 0xFFFFFFFFu);
+	const uint64_t hi_lo = (a >> 32)         * (b & 0xFFFFFFFFu);
+	const uint64_t lo_hi = (a & 0xFFFFFFFFu) * (b >> 32);
+	const uint64_t hi_hi = (a >> 32)         * (b >> 32);
+
+	const uint64_t cross = (lo_lo >> 32) + (hi_lo & 0xFFFFFFFFu) + lo_hi;
+	hi = (hi_lo >> 32) + (cross >> 32u) + hi_hi;
+}
+
+void main() {
+	if (gl_GlobalInvocationID.x >= length) {
+		return;
+	}
+
+	uint pos = gl_GlobalInvocationID.x;
+
+	uint64_t prod_hi;
+	mul64(inputs[0].vec[pos], barrett_factor, prod_hi);
+
+	uint64_t product = inputs[0].vec[pos] * multiplier - prod_hi * mod;
+	if (product >= mod)
+		product = mod - product;
+
+	uint64_t sum = product + inputs[1].vec[pos];
+	if (sum >= mod)
+		result[pos] = mod - sum;
+	else
+		result[pos] = sum;
+}

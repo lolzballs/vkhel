@@ -1,4 +1,5 @@
 vulkan_shaders_src = [
+  'elemfma.comp',
   'elemmul.comp',
   'elemgtadd.comp',
 ]

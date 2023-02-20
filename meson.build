@@ -3,6 +3,7 @@ project('vkhel', 'c')
 dep_vulkan = dependency('vulkan', required: true)
 
 sources = files([
+  'src/kernels/elemfma.c',
   'src/kernels/elemmul.c',
   'src/kernels/elemgtadd.c',
   'src/vector.c',

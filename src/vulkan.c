@@ -1,12 +1,14 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include "priv/kernels/elemfma.h"
 #include "priv/kernels/elemmul.h"
 #include "priv/kernels/elemgtadd.h"
 #include "priv/vulkan.h"
 
 typedef void (*vulkan_kernel_init_fn)(struct vulkan_ctx *);
 static const vulkan_kernel_init_fn vulkan_kernel_inits[VULKAN_KERNEL_TYPE_MAX] = {
+	[VULKAN_KERNEL_TYPE_ELEMFMA] = vulkan_kernel_elemfma_init,
 	[VULKAN_KERNEL_TYPE_ELEMMUL] = vulkan_kernel_elemmul_init,
 	[VULKAN_KERNEL_TYPE_ELEMGTADD] = vulkan_kernel_elemgtadd_init,
 };

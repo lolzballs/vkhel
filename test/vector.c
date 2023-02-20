@@ -68,6 +68,16 @@ void test_elemfma() {
 		vkhel_vector_destroy(c);
 	}
 
+	{
+		const uint64_t multiplier = 100;
+
+		const uint64_t c_expected[] = { 109, 210, 311, 412, 513, 614, 715, 47 };
+		struct vkhel_vector *c = vkhel_vector_create(g_ctx, vector_len);
+		vkhel_vector_elemfma(a, b, c, multiplier, modulus);
+		assert_vector_contents_equal(c, c_expected, vector_len);
+		vkhel_vector_destroy(c);
+	}
+
 	vkhel_vector_destroy(a);
 	vkhel_vector_destroy(b);
 }

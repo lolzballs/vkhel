@@ -3,6 +3,7 @@
 #include "priv/kernels/elemfma.h"
 #include "priv/kernels/elemmul.h"
 #include "priv/kernels/elemgtadd.h"
+#include "priv/kernels/elemgtsub.h"
 #include "priv/vkhel.h"
 #include "priv/vector.h"
 
@@ -176,6 +177,28 @@ void vkhel_vector_elemgtadd(struct vkhel_vector *operand,
 	vulkan_kernel_elemgtadd_record(&ctx->vk,
 			&ctx->vk.kernels[VULKAN_KERNEL_TYPE_ELEMGTADD], &execution,
 			result, operand, bound, diff);
+	vulkan_ctx_execution_end(&ctx->vk, &execution, execution_fence);
+
+	vkWaitForFences(ctx->vk.device, 1, &execution_fence, true, -1);
+	vkDestroyFence(ctx->vk.device, execution_fence, NULL);
+
+	vkDestroyDescriptorPool(ctx->vk.device, execution.descriptor_pool, NULL);
+}
+
+void vkhel_vector_elemgtsub(struct vkhel_vector *operand,
+		struct vkhel_vector *result,
+		uint64_t bound, uint64_t diff, uint64_t mod) {
+	assert(operand->ctx == result->ctx);
+	struct vkhel_ctx *ctx = result->ctx;
+
+	VkFence execution_fence;
+	vulkan_ctx_create_fence(&ctx->vk, &execution_fence, false);
+
+	struct vulkan_execution execution;
+	vulkan_ctx_execution_begin(&ctx->vk, &execution);
+	vulkan_kernel_elemgtsub_record(&ctx->vk,
+			&ctx->vk.kernels[VULKAN_KERNEL_TYPE_ELEMGTSUB], &execution,
+			result, operand, bound, diff, mod);
 	vulkan_ctx_execution_end(&ctx->vk, &execution, execution_fence);
 
 	vkWaitForFences(ctx->vk.device, 1, &execution_fence, true, -1);

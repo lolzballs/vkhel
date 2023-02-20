@@ -1,0 +1,39 @@
+#version 460
+#extension GL_ARB_gpu_shader_int64 : enable
+
+layout(local_size_x = 64) in;
+
+layout(binding = 0) readonly buffer input_buffer {
+	uint64_t operand[];
+};
+
+layout(binding = 1) writeonly buffer output_buffer {
+	uint64_t result[];
+};
+
+layout(push_constant) uniform constants {
+	uint64_t length;
+	uint64_t bound;
+	uint64_t diff;
+	uint64_t mod;
+};
+
+void main() {
+    if (gl_GlobalInvocationID.x >= length) {
+        return;
+    }
+
+    uint pos = gl_GlobalInvocationID.x;
+
+	/* TODO: replace with Barrett reduction */
+	uint64_t reduced = operand[pos] % mod; 
+
+	if (operand[pos] > bound) {
+		uint64_t z = reduced + mod - diff;
+		if (z >= mod)
+			result[pos] = z - mod;
+		else
+			result[pos] = z;
+	} else
+		result[pos] = reduced;
+}

@@ -6,6 +6,7 @@ sources = files([
   'src/kernels/elemfma.c',
   'src/kernels/elemmul.c',
   'src/kernels/elemgtadd.c',
+  'src/kernels/elemgtsub.c',
   'src/vector.c',
   'src/vkhel.c',
   'src/vulkan.c',

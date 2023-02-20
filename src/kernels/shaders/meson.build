@@ -2,6 +2,7 @@ vulkan_shaders_src = [
   'elemfma.comp',
   'elemmul.comp',
   'elemgtadd.comp',
+  'elemgtsub.comp',
 ]
 
 glslang = find_program('glslangValidator', native: true, required: true)

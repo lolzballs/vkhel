@@ -56,3 +56,13 @@ uint64_t nt_power_mod(uint64_t base, uint64_t exp, const uint64_t mod) {
 	}
 	return result;
 }
+
+bool nt_is_primitive_root(const uint64_t root, const uint64_t degree,
+		const uint64_t mod) {
+	if (root == 0) {
+		return false;
+	}
+
+	assert(__builtin_popcountll(degree) == 1);
+	return nt_power_mod(root, degree / 2, mod) == (mod - 1);
+}

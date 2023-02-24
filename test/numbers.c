@@ -77,8 +77,19 @@ void test_power_mod() {
 	}
 }
 
+void test_is_primitive_root() {
+	const uint64_t mod = 1234565441;
+	assert(nt_is_primitive_root(1234565440, 2, mod));
+	assert(nt_is_primitive_root(960907033, 8, mod));
+	assert(nt_is_primitive_root(1180581915, 16, mod));
+	assert(!nt_is_primitive_root(1180581915, 32, mod));
+	assert(!nt_is_primitive_root(1180581915, 8, mod));
+	assert(!nt_is_primitive_root(1180581915, 2, mod));
+}
+
 int main() {
 	RUN_TEST(ceil_log2);
 	RUN_TEST(multiply_mod);
 	RUN_TEST(power_mod);
+	RUN_TEST(is_primitive_root);
 }

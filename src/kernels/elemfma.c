@@ -156,9 +156,9 @@ void vulkan_kernel_elemfma_record(
 			VK_PIPELINE_BIND_POINT_COMPUTE,
 			kernel->pipeline_layout, 0, 1, &descriptor_set, 0, NULL);
 
-	const uint64_t mod_bits = ceil_log2(mod);
+	const uint64_t mod_bits = nt_ceil_log2(mod);
 	const uint64_t barrett_factor =
-		compute_barrett_factor(multiplier, mod, mod_bits);
+		nt_compute_barrett_factor(multiplier, mod, mod_bits);
 
 	const struct push_constants push = {
 		.length = result->length,

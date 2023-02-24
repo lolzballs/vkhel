@@ -1,12 +1,9 @@
 #include <assert.h>
 #include "priv/vkhel.h"
+#include "priv/numbers.h"
 #include "elemfma.comp.h"
 
 #define SHADER_LOCAL_SIZE_X 64
-
-/* barrett reduction: alpha - beta = 64 */
-static const int64_t alpha = 62;
-static const int64_t beta __attribute__((unused)) = -2;
 
 struct push_constants {
 	uint64_t length;
@@ -51,18 +48,6 @@ static const VkDescriptorSetLayoutCreateInfo descriptor_set_create_info = {
 		/ sizeof(VkDescriptorSetLayoutBinding),
 	.pBindings = descriptor_bindings,
 };
-
-static uint64_t ceil_log2(uint64_t v) {
-	return 64 - __builtin_clzll(v);
-}
-
-/* computes Barrett factor for multiplying `factor` modulo `mod` */
-static uint64_t compute_barrett_factor(uint64_t factor, uint64_t mod,
-		uint64_t n) {
-	assert(n + alpha >= 64);
-	const __uint128_t mu = (((__uint128_t) factor) << 64) / mod;
-	return mu;
-}
 
 void vulkan_kernel_elemfma_init(struct vulkan_ctx *vk) {
 	struct vulkan_kernel *ini = &vk->kernels[VULKAN_KERNEL_TYPE_ELEMFMA];

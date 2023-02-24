@@ -1,12 +1,9 @@
 #include <assert.h>
 #include "priv/vkhel.h"
+#include "priv/numbers.h"
 #include "elemmul.comp.h"
 
 #define SHADER_LOCAL_SIZE_X 64
-
-/* barrett reduction: alpha - beta = 64 */
-static const int64_t alpha = 62;
-static const int64_t beta __attribute__((unused)) = -2;
 
 struct push_constants {
 	uint64_t length;
@@ -51,16 +48,6 @@ static const VkDescriptorSetLayoutCreateInfo descriptor_set_create_info = {
 	.pBindings = descriptor_bindings,
 };
 
-static uint64_t ceil_log2(uint64_t v) {
-	return 64 - __builtin_clzll(v);
-}
-
-static uint64_t compute_barrett_factor(uint64_t mod, uint64_t n) {
-	assert(n + alpha >= 64);
-	const uint64_t mu_pre_hi = (uint64_t) 1 << (n + alpha - 64);
-	const __uint128_t mu = (((__uint128_t) mu_pre_hi) << 64) / mod;
-	return mu;
-}
 
 void vulkan_kernel_elemmul_init(struct vulkan_ctx *vk) {
 	struct vulkan_kernel *ini = &vk->kernels[VULKAN_KERNEL_TYPE_ELEMMUL];
@@ -169,7 +156,9 @@ void vulkan_kernel_elemmul_record(
 			kernel->pipeline_layout, 0, 1, &descriptor_set, 0, NULL);
 
 	const uint64_t mod_bits = ceil_log2(mod);
-	const uint64_t barrett_factor = compute_barrett_factor(mod, mod_bits);
+	const uint64_t barrett_factor = compute_barrett_factor(
+			(uint64_t) 1 << (mod_bits + alpha - 64),
+			mod, mod_bits);
 	const struct push_constants push = {
 		.length = result->length,
 		.mod = mod,

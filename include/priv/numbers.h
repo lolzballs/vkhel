@@ -19,5 +19,6 @@ uint64_t nt_power_mod(uint64_t base, uint64_t exp,
 		const uint64_t mod);
 bool nt_is_primitive_root(const uint64_t root, const uint64_t degree,
 		const uint64_t mod);
+uint64_t nt_inverse_mod(const uint64_t a, const uint64_t mod);
 
 #endif

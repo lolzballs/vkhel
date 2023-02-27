@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stdlib.h>
 #include "priv/numbers.h"
 
 static uint64_t compute_mod(const uint64_t hi, const uint64_t lo,
@@ -65,4 +66,34 @@ bool nt_is_primitive_root(const uint64_t root, const uint64_t degree,
 
 	assert(__builtin_popcountll(degree) == 1);
 	return nt_power_mod(root, degree / 2, mod) == (mod - 1);
+}
+
+uint64_t nt_inverse_mod(const uint64_t input, const uint64_t mod) {
+	assert(input < mod);
+	if (mod == 1) {
+		return 0;
+	}
+
+	/* computes inverse mod using extended Euclidean algorithm
+	 * derived from https://www.math.utah.edu/~fguevara/ACCESS2013/Euclid.pdf */
+	int64_t a = input;
+	int64_t b = mod;
+	int64_t y = 0;
+	int64_t x = 1;
+
+	while (a > 1) {
+		lldiv_t division = lldiv(a, b);
+		a = b;
+		b = division.rem;
+
+		int64_t temp = y;
+		y = x - division.quot * y;
+		x = temp;
+	}
+
+	if (x < 0) {
+		x += mod;
+	}
+
+	return x;
 }

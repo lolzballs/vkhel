@@ -87,9 +87,16 @@ void test_is_primitive_root() {
 	assert(!nt_is_primitive_root(1180581915, 2, mod));
 }
 
+void test_inverse_mod() {
+	assert(nt_inverse_mod(3, 11) == 4);
+	assert(nt_inverse_mod(5, 19) == 4);
+	assert(nt_inverse_mod(4, 19) == 5);
+}
+
 int main() {
 	RUN_TEST(ceil_log2);
 	RUN_TEST(multiply_mod);
 	RUN_TEST(power_mod);
 	RUN_TEST(is_primitive_root);
+	RUN_TEST(inverse_mod);
 }

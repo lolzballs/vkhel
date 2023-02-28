@@ -1,0 +1,17 @@
+#ifndef PRIV_NTT_TABLES_H
+#define PRIV_NTT_TABLES_H
+
+#include <stdint.h>
+
+struct ntt_tables {
+	uint64_t degree;
+	uint64_t q; /* modulus */
+	uint64_t w; /* root of unity */
+
+	uint64_t *roots_of_unity;
+	uint64_t *inv_roots_of_unity;
+	uint64_t *roots_barrett_factors;
+	uint64_t *inv_roots_barrett_factors;
+};
+
+#endif

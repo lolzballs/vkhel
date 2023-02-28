@@ -7,6 +7,7 @@ sources = files([
   'src/kernels/elemmul.c',
   'src/kernels/elemgtadd.c',
   'src/kernels/elemgtsub.c',
+  'src/ntt_tables.c',
   'src/numbers.c',
   'src/vector.c',
   'src/vkhel.c',

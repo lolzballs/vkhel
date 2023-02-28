@@ -8,6 +8,10 @@ struct vkhel_ctx;
 struct vkhel_ctx *vkhel_ctx_create();
 void vkhel_ctx_destroy(struct vkhel_ctx *);
 
+struct ntt_tables;
+struct ntt_tables *ntt_tables_create(uint64_t degree, uint64_t q, uint64_t w);
+void ntt_tables_destroy(struct ntt_tables *);
+
 struct vkhel_vector;
 struct vkhel_vector *vkhel_vector_create(struct vkhel_ctx *, uint64_t length);
 void vkhel_vector_destroy(struct vkhel_vector *);

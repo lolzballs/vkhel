@@ -27,12 +27,12 @@ struct vulkan_execution {
 };
 
 struct vulkan_ctx {
-    VkInstance instance;
-    VkPhysicalDevice physical_device;
-    VkDevice device;
+	VkInstance instance;
+	VkPhysicalDevice physical_device;
+	VkDevice device;
 
-    uint32_t queue_family_index;
-    VkQueue queue;
+	uint32_t queue_family_index;
+	VkQueue queue;
 
 	VkPhysicalDeviceMemoryProperties memory_properties;
 	uint32_t host_visible_memory_index;

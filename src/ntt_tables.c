@@ -22,8 +22,8 @@ static void compute_roots_of_unity_powers(struct ntt_tables *ntt) {
 			ntt->q, nt_ceil_log2(ntt->q));
 
 	uint64_t prev_root = 1;
-	for (uint64_t i = 1; i < ntt->degree; i++) {
-		uint64_t idx = reverse_bits(i, nt_ceil_log2(ntt->degree) - 1);
+	for (uint64_t i = 1; i < ntt->n; i++) {
+		uint64_t idx = reverse_bits(i, nt_ceil_log2(ntt->n) - 1);
 		ntt->roots_of_unity[idx] = nt_multiply_mod(prev_root, ntt->w,
 				ntt->q, barrett_factor);
 		ntt->inv_roots_of_unity[idx] =
@@ -32,7 +32,7 @@ static void compute_roots_of_unity_powers(struct ntt_tables *ntt) {
 		prev_root = ntt->roots_of_unity[idx];
 	}
 
-	for (uint64_t i = 0; i < ntt->degree; i++) {
+	for (uint64_t i = 0; i < ntt->n; i++) {
 		ntt->roots_barrett_factors[i] =
 			nt_compute_barrett_factor(ntt->roots_of_unity[i],
 					ntt->q, nt_ceil_log2(ntt->q));
@@ -42,16 +42,16 @@ static void compute_roots_of_unity_powers(struct ntt_tables *ntt) {
 	}
 }
 
-struct ntt_tables *ntt_tables_create(uint64_t degree, uint64_t q, uint64_t w) {
+struct ntt_tables *ntt_tables_create(uint64_t n, uint64_t q, uint64_t w) {
 	struct ntt_tables *ini = calloc(1, sizeof(struct ntt_tables));
-	ini->degree = degree;
+	ini->n = n;
 	ini->q = q;
 	ini->w = w;
 
-	ini->roots_of_unity = malloc(sizeof(uint64_t) * degree);
-	ini->inv_roots_of_unity = malloc(sizeof(uint64_t) * degree);
-	ini->roots_barrett_factors = malloc(sizeof(uint64_t) * degree);
-	ini->inv_roots_barrett_factors = malloc(sizeof(uint64_t) * degree);
+	ini->roots_of_unity = malloc(sizeof(uint64_t) * n);
+	ini->inv_roots_of_unity = malloc(sizeof(uint64_t) * n);
+	ini->roots_barrett_factors = malloc(sizeof(uint64_t) * n);
+	ini->inv_roots_barrett_factors = malloc(sizeof(uint64_t) * n);
 
 	compute_roots_of_unity_powers(ini);
 

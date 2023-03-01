@@ -9,7 +9,7 @@ struct vkhel_ctx *vkhel_ctx_create();
 void vkhel_ctx_destroy(struct vkhel_ctx *);
 
 struct ntt_tables;
-struct ntt_tables *ntt_tables_create(uint64_t degree, uint64_t q, uint64_t w);
+struct ntt_tables *ntt_tables_create(uint64_t n, uint64_t q, uint64_t w);
 void ntt_tables_destroy(struct ntt_tables *);
 
 struct vkhel_vector;

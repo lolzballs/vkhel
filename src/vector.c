@@ -54,6 +54,20 @@ void vkhel_vector_destroy(struct vkhel_vector *vector) {
 	free(vector);
 }
 
+void vkhel_vector_dbgprint(struct vkhel_vector *vector) {
+	struct vkhel_ctx *ctx = vector->ctx;
+
+	uint64_t *mapped = NULL;
+	vkMapMemory(ctx->vk.device, vector->memory, 0,
+			vector->length * sizeof(uint64_t), 0, (void **) &mapped);
+	for (size_t i = 0; i < vector->length; i++) {
+		printf((i == vector->length - 1) ? ("%" PRIu64) : ("%" PRIu64 " "),
+				mapped[i]);
+	}
+	printf("\n");
+	vkUnmapMemory(ctx->vk.device, vector->memory);
+}
+
 struct vkhel_vector *vkhel_vector_dup(struct vkhel_vector *src) {
 	VkResult res;
 

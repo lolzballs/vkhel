@@ -1,0 +1,37 @@
+#version 460
+#extension GL_ARB_gpu_shader_int64 : enable
+
+layout(local_size_x = 64) in;
+
+layout(binding = 0) buffer operand_buffer {
+	uint64_t operand[];
+};
+
+layout(push_constant) uniform constants {
+	uint64_t transform_size;
+	uint64_t twiddle_factor;
+	uint64_t mod;
+};
+
+void main() {
+    if (gl_GlobalInvocationID.x >= transform_size) {
+        return;
+    }
+
+    const uint pos = gl_GlobalInvocationID.x;
+
+	const uint xidx = uint(pos);
+	const uint yidx = uint(pos + transform_size);
+
+	const int64_t X = int64_t(operand[xidx]);
+	const int64_t Y = int64_t(operand[yidx]);
+	
+	const int64_t WY = int64_t((twiddle_factor * Y) % mod);
+	operand[xidx] = (X + WY) % mod;
+	int64_t temp_y = X - WY;
+	while (temp_y < 0) {
+		temp_y += int64_t(mod);
+	}
+	operand[yidx] = temp_y % mod;
+
+}

@@ -6,6 +6,8 @@
 #include "priv/kernels/elemmul.h"
 #include "priv/kernels/elemgtadd.h"
 #include "priv/kernels/elemgtsub.h"
+#include "priv/kernels/nttfwdbutterfly.h"
+#include "priv/ntt_tables.h"
 #include "priv/vkhel.h"
 #include "priv/vector.h"
 
@@ -63,7 +65,7 @@ void vkhel_vector_dbgprint(struct vkhel_vector *vector) {
 	vkMapMemory(ctx->vk.device, vector->memory, 0,
 			vector->length * sizeof(uint64_t), 0, (void **) &mapped);
 	for (size_t i = 0; i < vector->length; i++) {
-		printf((i == vector->length - 1) ? ("%" PRIu64) : ("%" PRIu64 " "),
+		printf((i == vector->length - 1) ? ("%" PRIu64) : ("%" PRIu64 ", "),
 				mapped[i]);
 	}
 	printf("\n");
@@ -221,4 +223,37 @@ void vkhel_vector_elemgtsub(struct vkhel_vector *operand,
 	vkDestroyFence(ctx->vk.device, execution_fence, NULL);
 
 	vkDestroyDescriptorPool(ctx->vk.device, execution.descriptor_pool, NULL);
+}
+
+void vkhel_vector_forward_transform(struct vkhel_vector *operand,
+		struct ntt_tables *ntt) {
+	struct vkhel_ctx *ctx = operand->ctx;
+
+	VkFence execution_fence;
+	vulkan_ctx_create_fence(&ctx->vk, &execution_fence, false);
+
+	struct vulkan_execution execution;
+	uint64_t t = ntt->n / 2;
+	for (uint64_t m = 1; m < ntt->n; m *= 2) {
+		uint64_t offset = 0;
+		for (size_t i = 0; i < m; i++) {
+			const uint64_t W = ntt->roots_of_unity[m + i];
+
+			vulkan_ctx_execution_begin(&ctx->vk, &execution);
+			vulkan_kernel_nttfwdbutterfly_record(&ctx->vk,
+					&ctx->vk.kernels[VULKAN_KERNEL_TYPE_NTTFWDBUTTERFLY],
+					&execution, ntt, ntt->q, W, t, offset, operand);
+			vulkan_ctx_execution_end(&ctx->vk, &execution, execution_fence);
+			vkWaitForFences(ctx->vk.device, 1, &execution_fence, true, -1);
+			vkResetFences(ctx->vk.device, 1, &execution_fence);
+
+			vkDestroyDescriptorPool(ctx->vk.device, execution.descriptor_pool, NULL);
+
+			offset += t * 2;
+		}
+
+		t /= 2;
+	}
+
+	vkDestroyFence(ctx->vk.device, execution_fence, NULL);
 }

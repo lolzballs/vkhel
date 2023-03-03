@@ -31,5 +31,7 @@ void vkhel_vector_elemgtadd(struct vkhel_vector *operand,
 void vkhel_vector_elemgtsub(struct vkhel_vector *operand,
 		struct vkhel_vector *result,
 		uint64_t bound, uint64_t diff, uint64_t mod);
+void vkhel_vector_forward_transform(struct vkhel_vector *operand,
+		struct ntt_tables *ntt);
 
 #endif

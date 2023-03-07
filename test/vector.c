@@ -206,6 +206,24 @@ void test_forward_transform() {
 	ntt_tables_destroy(ntt_tables);
 }
 
+void test_inverse_transform() {
+	const size_t vector_len = 4;
+	const uint64_t operand[] = { 82, 2, 81, 98 };
+	const uint64_t expected[] = { 94, 109, 11, 18 };
+
+	struct ntt_tables *ntt_tables = ntt_tables_create(vector_len, 113, 18);
+
+	struct vkhel_vector *a = vkhel_vector_create(g_ctx, vector_len);
+	vkhel_vector_copy_from_host(a, operand);
+
+	vkhel_vector_inverse_transform(a, ntt_tables);
+	assert_vector_contents_equal(a, expected, vector_len);
+
+	vkhel_vector_destroy(a);
+
+	ntt_tables_destroy(ntt_tables);
+}
+
 void test_dup() {
 	const size_t vector_len = 64;
 	uint64_t elements[vector_len];
@@ -233,6 +251,7 @@ int main() {
 	RUN_TEST(elemgtadd);
 	RUN_TEST(elemgtsub);
 	RUN_TEST(forward_transform);
+	RUN_TEST(inverse_transform);
 
 	vkhel_ctx_destroy(g_ctx);
 }

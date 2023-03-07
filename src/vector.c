@@ -4,10 +4,13 @@
 #include <string.h>
 #include "priv/kernels/elemfma.h"
 #include "priv/kernels/elemmul.h"
+#include "priv/kernels/elemmulconst.h"
 #include "priv/kernels/elemgtadd.h"
 #include "priv/kernels/elemgtsub.h"
 #include "priv/kernels/nttfwdbutterfly.h"
+#include "priv/kernels/nttrevbutterfly.h"
 #include "priv/ntt_tables.h"
+#include "priv/numbers.h"
 #include "priv/vkhel.h"
 #include "priv/vector.h"
 
@@ -254,6 +257,53 @@ void vkhel_vector_forward_transform(struct vkhel_vector *operand,
 
 		t /= 2;
 	}
+
+	vkDestroyFence(ctx->vk.device, execution_fence, NULL);
+}
+
+void vkhel_vector_inverse_transform(struct vkhel_vector *operand,
+		struct ntt_tables *ntt) {
+	struct vkhel_ctx *ctx = operand->ctx;
+
+	VkFence execution_fence;
+	vulkan_ctx_create_fence(&ctx->vk, &execution_fence, false);
+
+	struct vulkan_execution execution;
+	uint64_t t = 1;
+	for (uint64_t m = ntt->n / 2; m >= 1; m /= 2) {
+		uint64_t offset = 0;
+		for (size_t i = 0; i < m; i++) {
+			const uint64_t W = ntt->inv_roots_of_unity[m + i];
+
+			vulkan_ctx_execution_begin(&ctx->vk, &execution);
+			vulkan_kernel_nttrevbutterfly_record(&ctx->vk,
+					&ctx->vk.kernels[VULKAN_KERNEL_TYPE_NTTREVBUTTERFLY],
+					&execution, ntt, ntt->q, W, t, offset, operand);
+			vulkan_ctx_execution_end(&ctx->vk, &execution, execution_fence);
+
+			vkWaitForFences(ctx->vk.device, 1, &execution_fence, true, -1);
+			vkResetFences(ctx->vk.device, 1, &execution_fence);
+
+			vkDestroyDescriptorPool(ctx->vk.device, execution.descriptor_pool, NULL);
+
+			offset += t * 2;
+		}
+
+		t *= 2;
+	}
+
+	/* need to adjust all elements by inv(N) */
+	const uint64_t inv_n = nt_inverse_mod(ntt->n, ntt->q);
+
+	vulkan_ctx_execution_begin(&ctx->vk, &execution);
+	vulkan_kernel_elemmulconst_record(&ctx->vk, 
+			&ctx->vk.kernels[VULKAN_KERNEL_TYPE_ELEMMULCONST],
+			&execution, operand, operand, inv_n, ntt->q);
+	vulkan_ctx_execution_end(&ctx->vk, &execution, execution_fence);
+
+	vkWaitForFences(ctx->vk.device, 1, &execution_fence, true, -1);
+	vkResetFences(ctx->vk.device, 1, &execution_fence);
+	vkDestroyDescriptorPool(ctx->vk.device, execution.descriptor_pool, NULL);
 
 	vkDestroyFence(ctx->vk.device, execution_fence, NULL);
 }

@@ -5,6 +5,7 @@ dep_vulkan = dependency('vulkan', required: true)
 sources = files([
   'src/kernels/elemfma.c',
   'src/kernels/elemmul.c',
+  'src/kernels/elemmulconst.c',
   'src/kernels/elemgtadd.c',
   'src/kernels/elemgtsub.c',
   'src/kernels/nttfwdbutterfly.c',

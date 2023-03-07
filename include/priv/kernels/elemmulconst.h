@@ -1,0 +1,19 @@
+#ifndef PRIV_KERNELS_ELEMMULCONST
+#define PRIV_KERNELS_ELEMMULCONST
+
+#include <stdint.h>
+
+struct vulkan_ctx;
+struct vulkan_kernel;
+struct vulkan_execution;
+struct vkhel_vector;
+
+void vulkan_kernel_elemmulconst_init(struct vulkan_ctx *);
+void vulkan_kernel_elemmulconst_record(
+		struct vulkan_ctx *vk,
+		struct vulkan_kernel *kernel,
+		struct vulkan_execution *execution,
+		struct vkhel_vector *result,
+		struct vkhel_vector *a, uint64_t b, uint64_t mod);
+
+#endif

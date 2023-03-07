@@ -1,6 +1,7 @@
 vulkan_shaders_src = [
   'elemfma.comp',
   'elemmul.comp',
+  'elemmulconst.comp',
   'elemgtadd.comp',
   'elemgtsub.comp',
   'nttfwdbutterfly.comp',

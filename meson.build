@@ -8,6 +8,7 @@ sources = files([
   'src/kernels/elemgtadd.c',
   'src/kernels/elemgtsub.c',
   'src/kernels/nttfwdbutterfly.c',
+  'src/kernels/nttrevbutterfly.c',
   'src/ntt_tables.c',
   'src/numbers.c',
   'src/vector.c',

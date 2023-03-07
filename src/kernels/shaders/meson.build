@@ -4,6 +4,7 @@ vulkan_shaders_src = [
   'elemgtadd.comp',
   'elemgtsub.comp',
   'nttfwdbutterfly.comp',
+  'nttrevbutterfly.comp',
 ]
 
 glslang = find_program('glslangValidator', native: true, required: true)

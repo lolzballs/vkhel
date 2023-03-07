@@ -6,6 +6,7 @@
 #include "priv/kernels/elemgtadd.h"
 #include "priv/kernels/elemgtsub.h"
 #include "priv/kernels/nttfwdbutterfly.h"
+#include "priv/kernels/nttrevbutterfly.h"
 #include "priv/vulkan.h"
 
 typedef void (*vulkan_kernel_init_fn)(struct vulkan_ctx *);
@@ -15,6 +16,7 @@ static const vulkan_kernel_init_fn vulkan_kernel_inits[VULKAN_KERNEL_TYPE_MAX] =
 	[VULKAN_KERNEL_TYPE_ELEMGTADD] = vulkan_kernel_elemgtadd_init,
 	[VULKAN_KERNEL_TYPE_ELEMGTSUB] = vulkan_kernel_elemgtsub_init,
 	[VULKAN_KERNEL_TYPE_NTTFWDBUTTERFLY] = vulkan_kernel_nttfwdbutterfly_init,
+	[VULKAN_KERNEL_TYPE_NTTREVBUTTERFLY] = vulkan_kernel_nttrevbutterfly_init,
 };
 
 static void vulkan_kernel_finish(struct vulkan_ctx *vk,

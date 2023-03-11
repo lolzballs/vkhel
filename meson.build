@@ -20,18 +20,20 @@ sources = files([
 subdir('src/kernels/shaders')
 
 vkhel_deps = [dep_vulkan]
-vkhel_incs = include_directories('include')
+vkhel_incs = include_directories('include/vkhel')
+vkhel_priv_incs = [vkhel_incs, include_directories('include')]
 
 lib_vkhel_priv = static_library(
   meson.project_name() + '_priv',
   sources,
-  include_directories: vkhel_incs,
+  include_directories: vkhel_priv_incs,
   dependencies: vkhel_deps,
 )
 
 symbols_file = 'vkhel.syms'
 lib_vkhel = library(
   meson.project_name(),
+  include_directories: [vkhel_incs],
   dependencies: vkhel_deps,
   link_whole: lib_vkhel_priv,
   link_args: '-Wl,--version-script,@0@/@1@'.format(meson.current_source_dir(), symbols_file),
@@ -41,7 +43,7 @@ lib_vkhel = library(
 vkhel_priv = declare_dependency(
   link_with: lib_vkhel_priv,
   dependencies: vkhel_deps,
-  include_directories: vkhel_incs,
+  include_directories: vkhel_priv_incs,
 )
 
 vkhel = declare_dependency(

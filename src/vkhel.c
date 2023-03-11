@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <vkhel/vkhel.h>
 #include "priv/vkhel.h"
 
 struct vkhel_ctx *vkhel_ctx_create() {

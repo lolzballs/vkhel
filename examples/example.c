@@ -1,7 +1,7 @@
 #include <assert.h>
 #include <inttypes.h>
 #include <stdio.h>
-#include "vkhel/vkhel.h"
+#include <vkhel.h>
 
 static void print_vector(struct vkhel_vector *vec, size_t vec_length) {
 	uint64_t *mapped;

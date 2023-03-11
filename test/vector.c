@@ -1,7 +1,7 @@
 #include <assert.h>
 #include <inttypes.h>
 #include <stdio.h>
-#include "vkhel/vkhel.h"
+#include <vkhel.h>
 
 #define RUN_TEST(name) ({\
 		test_##name();\

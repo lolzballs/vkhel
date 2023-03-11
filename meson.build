@@ -22,6 +22,7 @@ subdir('src/kernels/shaders')
 vkhel_deps = [dep_vulkan]
 vkhel_incs = include_directories('include/vkhel')
 vkhel_priv_incs = [vkhel_incs, include_directories('include')]
+install_headers('include/vkhel/vkhel.h')
 
 lib_vkhel_priv = static_library(
   meson.project_name() + '_priv',
@@ -38,6 +39,7 @@ lib_vkhel = library(
   link_whole: lib_vkhel_priv,
   link_args: '-Wl,--version-script,@0@/@1@'.format(meson.current_source_dir(), symbols_file),
   link_depends: symbols_file,
+  install: true,
 )
 
 vkhel_priv = declare_dependency(
@@ -54,3 +56,6 @@ vkhel = declare_dependency(
 
 subdir('examples')
 subdir('test')
+
+pkg = import('pkgconfig')
+pkg.generate(lib_vkhel)

@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "priv/kernels/elemfma.h"
+#include "priv/kernels/elemmodbytwo.h"
 #include "priv/kernels/elemmul.h"
 #include "priv/kernels/elemmulconst.h"
 #include "priv/kernels/elemgtadd.h"
@@ -156,6 +157,35 @@ void vkhel_vector_elemfma(struct vkhel_vector *a, struct vkhel_vector *b,
 	vulkan_kernel_elemfma_record(&ctx->vk,
 			&ctx->vk.kernels[VULKAN_KERNEL_TYPE_ELEMFMA], &execution,
 			result, a, b, multiplier, mod);
+	vulkan_ctx_execution_end(&ctx->vk, &execution, execution_fence);
+
+	vkWaitForFences(ctx->vk.device, 1, &execution_fence, true, -1);
+	vkDestroyFence(ctx->vk.device, execution_fence, NULL);
+
+	vkDestroyDescriptorPool(ctx->vk.device, execution.descriptor_pool, NULL);
+}
+
+void vkhel_vector_elemmod(struct vkhel_vector *operand,
+		struct vkhel_vector *result, uint64_t mod) {
+	assert(operand->ctx == result->ctx);
+	struct vkhel_ctx *ctx = operand->ctx;
+
+	VkFence execution_fence;
+	vulkan_ctx_create_fence(&ctx->vk, &execution_fence, false);
+
+	struct vulkan_execution execution;
+	vulkan_ctx_execution_begin(&ctx->vk, &execution);
+
+	if (mod == 2) {
+		vulkan_kernel_elemmodbytwo_record(&ctx->vk,
+				&ctx->vk.kernels[VULKAN_KERNEL_TYPE_ELEMMODBYTWO], &execution,
+				result, operand);
+	} else {
+		vulkan_kernel_elemmulconst_record(&ctx->vk,
+				&ctx->vk.kernels[VULKAN_KERNEL_TYPE_ELEMMULCONST], &execution,
+				result, operand, 1, mod);
+	}
+
 	vulkan_ctx_execution_end(&ctx->vk, &execution, execution_fence);
 
 	vkWaitForFences(ctx->vk.device, 1, &execution_fence, true, -1);

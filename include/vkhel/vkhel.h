@@ -23,6 +23,8 @@ void vkhel_vector_unmap(struct vkhel_vector *);
 void vkhel_vector_elemfma(struct vkhel_vector *a, struct vkhel_vector *b,
 		struct vkhel_vector *result,
 		uint64_t multiplier, uint64_t mod);
+void vkhel_vector_elemmod(struct vkhel_vector *a,
+		struct vkhel_vector *result, uint64_t mod);
 void vkhel_vector_elemmul(struct vkhel_vector *a, struct vkhel_vector *b,
 		struct vkhel_vector *result, uint64_t mod);
 void vkhel_vector_elemgtadd(struct vkhel_vector *operand,

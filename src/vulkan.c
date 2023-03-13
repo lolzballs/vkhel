@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "priv/kernels/elemfma.h"
+#include "priv/kernels/elemmodbytwo.h"
 #include "priv/kernels/elemmul.h"
 #include "priv/kernels/elemmulconst.h"
 #include "priv/kernels/elemgtadd.h"
@@ -19,6 +20,7 @@ static const vulkan_kernel_init_fn vulkan_kernel_inits[VULKAN_KERNEL_TYPE_MAX] =
 	[VULKAN_KERNEL_TYPE_NTTFWDBUTTERFLY] = vulkan_kernel_nttfwdbutterfly_init,
 	[VULKAN_KERNEL_TYPE_NTTREVBUTTERFLY] = vulkan_kernel_nttrevbutterfly_init,
 	[VULKAN_KERNEL_TYPE_ELEMMULCONST] = vulkan_kernel_elemmulconst_init,
+	[VULKAN_KERNEL_TYPE_ELEMMODBYTWO] = vulkan_kernel_elemmodbytwo_init,
 };
 
 static void vulkan_kernel_finish(struct vulkan_ctx *vk,

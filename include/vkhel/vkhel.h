@@ -8,9 +8,10 @@ struct vkhel_ctx;
 struct vkhel_ctx *vkhel_ctx_create();
 void vkhel_ctx_destroy(struct vkhel_ctx *);
 
-struct ntt_tables;
-struct ntt_tables *ntt_tables_create(uint64_t n, uint64_t q, uint64_t w);
-void ntt_tables_destroy(struct ntt_tables *);
+struct vkhel_ntt_tables;
+struct vkhel_ntt_tables *vkhel_ntt_tables_create(
+		uint64_t n, uint64_t q, uint64_t w);
+void vkhel_ntt_tables_destroy(struct vkhel_ntt_tables *);
 
 struct vkhel_vector;
 struct vkhel_vector *vkhel_vector_create(struct vkhel_ctx *, uint64_t length);
@@ -34,8 +35,8 @@ void vkhel_vector_elemgtsub(struct vkhel_vector *operand,
 		struct vkhel_vector *result,
 		uint64_t bound, uint64_t diff, uint64_t mod);
 void vkhel_vector_forward_transform(struct vkhel_vector *operand,
-		struct ntt_tables *ntt);
+		struct vkhel_ntt_tables *ntt);
 void vkhel_vector_inverse_transform(struct vkhel_vector *operand,
-		struct ntt_tables *ntt);
+		struct vkhel_ntt_tables *ntt);
 
 #endif

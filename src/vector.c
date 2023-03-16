@@ -259,7 +259,7 @@ void vkhel_vector_elemgtsub(struct vkhel_vector *operand,
 }
 
 void vkhel_vector_forward_transform(struct vkhel_vector *operand,
-		struct ntt_tables *ntt) {
+		struct vkhel_ntt_tables *ntt) {
 	struct vkhel_ctx *ctx = operand->ctx;
 
 	VkFence execution_fence;
@@ -292,7 +292,7 @@ void vkhel_vector_forward_transform(struct vkhel_vector *operand,
 }
 
 void vkhel_vector_inverse_transform(struct vkhel_vector *operand,
-		struct ntt_tables *ntt) {
+		struct vkhel_ntt_tables *ntt) {
 	struct vkhel_ctx *ctx = operand->ctx;
 
 	VkFence execution_fence;

@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-struct ntt_tables {
+struct vkhel_ntt_tables {
 	uint64_t n; /* degree */
 	uint64_t q; /* modulus */
 	uint64_t w; /* root of unity */

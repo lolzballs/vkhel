@@ -13,7 +13,7 @@ static uint64_t reverse_bits(uint64_t a, const uint64_t bit_width) {
 	return rev;
 }
 
-static void compute_roots_of_unity_powers(struct ntt_tables *ntt) {
+static void compute_roots_of_unity_powers(struct vkhel_ntt_tables *ntt) {
 	ntt->roots_of_unity[0] = 1;
 	ntt->inv_roots_of_unity[0] = nt_inverse_mod(1, ntt->q);
 
@@ -42,8 +42,9 @@ static void compute_roots_of_unity_powers(struct ntt_tables *ntt) {
 	}
 }
 
-struct ntt_tables *ntt_tables_create(uint64_t n, uint64_t q, uint64_t w) {
-	struct ntt_tables *ini = calloc(1, sizeof(struct ntt_tables));
+struct vkhel_ntt_tables *vkhel_ntt_tables_create(uint64_t n,
+		uint64_t q, uint64_t w) {
+	struct vkhel_ntt_tables *ini = calloc(1, sizeof(struct vkhel_ntt_tables));
 	ini->n = n;
 	ini->q = q;
 	ini->w = w;
@@ -58,7 +59,7 @@ struct ntt_tables *ntt_tables_create(uint64_t n, uint64_t q, uint64_t w) {
 	return ini;
 }
 
-void ntt_tables_destroy(struct ntt_tables *ntt) {
+void vkhel_ntt_tables_destroy(struct vkhel_ntt_tables *ntt) {
 	free(ntt->roots_of_unity);
 	free(ntt->inv_roots_of_unity);
 	free(ntt->roots_barrett_factors);

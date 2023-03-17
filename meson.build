@@ -18,6 +18,10 @@ sources = files([
   'src/vulkan.c',
 ])
 
+if get_option('debug')
+  add_project_arguments('-DVKHEL_DEBUG', language: 'c')
+endif
+
 subdir('src/kernels/shaders')
 
 vkhel_deps = [dep_vulkan]

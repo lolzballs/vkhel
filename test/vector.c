@@ -185,6 +185,12 @@ void test_elemgtsub() {
 	assert_vector_contents_equal(d, d_expected, vector_len);
 	vkhel_vector_destroy(d);
 
+	/* > 1, - 8 (mod 5) */
+	struct vkhel_vector *e = vkhel_vector_create(g_ctx, vector_len);
+	vkhel_vector_elemgtsub(a, e, 1, 8, 5);
+	assert_vector_contents_equal(e, d_expected, vector_len);
+	vkhel_vector_destroy(e);
+
 	vkhel_vector_destroy(a);
 }
 

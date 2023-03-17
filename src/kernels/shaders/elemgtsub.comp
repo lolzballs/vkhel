@@ -54,9 +54,10 @@ void main() {
     uint pos = gl_GlobalInvocationID.x;
 
 	uint64_t reduced = reduce64(operand[pos]); 
+	uint64_t diff_reduced = reduce64(diff);
 
 	if (operand[pos] > bound) {
-		uint64_t z = reduced + mod - diff;
+		uint64_t z = reduced + mod - diff_reduced;
 		if (z >= mod)
 			result[pos] = z - mod;
 		else

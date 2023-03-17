@@ -25,7 +25,7 @@ void vkhel_vector_elemfma(struct vkhel_vector *a, struct vkhel_vector *b,
 		struct vkhel_vector *result,
 		uint64_t multiplier, uint64_t mod);
 void vkhel_vector_elemmod(struct vkhel_vector *a,
-		struct vkhel_vector *result, uint64_t mod);
+		struct vkhel_vector *result, uint64_t mod, uint64_t q);
 void vkhel_vector_elemmul(struct vkhel_vector *a, struct vkhel_vector *b,
 		struct vkhel_vector *result, uint64_t mod);
 void vkhel_vector_elemgtadd(struct vkhel_vector *operand,

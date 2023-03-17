@@ -195,25 +195,49 @@ void test_elemgtsub() {
 }
 
 void test_elemmod() {
-	const size_t vector_len = 8;
-	const uint64_t a_elements[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
+	{
+		const size_t vector_len = 8;
+		const uint64_t a_elements[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
 
-	struct vkhel_vector *a = vkhel_vector_create(g_ctx, vector_len);
-	vkhel_vector_copy_from_host(a, a_elements);
+		struct vkhel_vector *a = vkhel_vector_create(g_ctx, vector_len);
+		vkhel_vector_copy_from_host(a, a_elements);
 
-	const uint64_t c_expected[] = { 1, 0, 1, 0, 1, 0, 1, 0 };
-	struct vkhel_vector *c = vkhel_vector_create(g_ctx, vector_len);
-	vkhel_vector_elemmod(a, c, 2);
-	assert_vector_contents_equal(c, c_expected, vector_len);
-	vkhel_vector_destroy(c);
+		const uint64_t c_expected[] = { 1, 0, 1, 0, 1, 0, 1, 0 };
+		struct vkhel_vector *c = vkhel_vector_create(g_ctx, vector_len);
+		vkhel_vector_elemmod(a, c, 2, UINT64_MAX);
+		assert_vector_contents_equal(c, c_expected, vector_len);
+		vkhel_vector_destroy(c);
 
-	const uint64_t d_expected[] = { 1, 2, 0, 1, 2, 0, 1, 2 };
-	struct vkhel_vector *d = vkhel_vector_create(g_ctx, vector_len);
-	vkhel_vector_elemmod(a, d, 3);
-	assert_vector_contents_equal(d, d_expected, vector_len);
-	vkhel_vector_destroy(d);
+		const uint64_t d_expected[] = { 1, 2, 0, 1, 2, 0, 1, 2 };
+		struct vkhel_vector *d = vkhel_vector_create(g_ctx, vector_len);
+		vkhel_vector_elemmod(a, d, 3, UINT64_MAX);
+		assert_vector_contents_equal(d, d_expected, vector_len);
+		vkhel_vector_destroy(d);
 
-	vkhel_vector_destroy(a);
+		vkhel_vector_destroy(a);
+	}
+
+	{
+		const size_t vector_len = 4;
+		const uint64_t a_elements[] = { 62, 7, 65, 8 };
+
+		struct vkhel_vector *a = vkhel_vector_create(g_ctx, vector_len);
+		vkhel_vector_copy_from_host(a, a_elements);
+
+		const uint64_t c_expected[] = { 1, 1, 0, 0 };
+		struct vkhel_vector *c = vkhel_vector_create(g_ctx, vector_len);
+		vkhel_vector_elemmod(a, c, 2, 73);
+		assert_vector_contents_equal(c, c_expected, vector_len);
+		vkhel_vector_destroy(c);
+
+		const uint64_t d_expected[] = { 4, 2, 2, 3 };
+		struct vkhel_vector *d = vkhel_vector_create(g_ctx, vector_len);
+		vkhel_vector_elemmod(a, d, 5, 73);
+		assert_vector_contents_equal(d, d_expected, vector_len);
+		vkhel_vector_destroy(d);
+
+		vkhel_vector_destroy(a);
+	}
 }
 
 void test_forward_transform() {

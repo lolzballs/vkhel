@@ -166,7 +166,7 @@ void vkhel_vector_elemfma(struct vkhel_vector *a, struct vkhel_vector *b,
 }
 
 void vkhel_vector_elemmod(struct vkhel_vector *operand,
-		struct vkhel_vector *result, uint64_t mod) {
+		struct vkhel_vector *result, uint64_t mod, uint64_t q) {
 	assert(operand->ctx == result->ctx);
 	struct vkhel_ctx *ctx = operand->ctx;
 
@@ -179,11 +179,11 @@ void vkhel_vector_elemmod(struct vkhel_vector *operand,
 	if (mod == 2) {
 		vulkan_kernel_elemmodbytwo_record(&ctx->vk,
 				&ctx->vk.kernels[VULKAN_KERNEL_TYPE_ELEMMODBYTWO], &execution,
-				result, operand, UINT64_MAX);
+				result, operand, q / 2);
 	} else {
-		vulkan_kernel_elemmulconst_record(&ctx->vk,
-				&ctx->vk.kernels[VULKAN_KERNEL_TYPE_ELEMMULCONST], &execution,
-				result, operand, 1, mod);
+		vulkan_kernel_elemgtsub_record(&ctx->vk,
+				&ctx->vk.kernels[VULKAN_KERNEL_TYPE_ELEMGTSUB], &execution,
+				result, operand, q / 2, q, mod);
 	}
 
 	vulkan_ctx_execution_end(&ctx->vk, &execution, execution_fence);

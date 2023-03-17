@@ -259,11 +259,15 @@ void vkhel_vector_elemgtsub(struct vkhel_vector *operand,
 }
 
 void vkhel_vector_forward_transform(struct vkhel_vector *operand,
+		struct vkhel_vector *result,
 		struct vkhel_ntt_tables *ntt) {
+	assert(operand->ctx == result->ctx);
 	struct vkhel_ctx *ctx = operand->ctx;
 
 	VkFence execution_fence;
 	vulkan_ctx_create_fence(&ctx->vk, &execution_fence, false);
+
+	struct vkhel_vector *input = operand;
 
 	struct vulkan_execution execution;
 	uint64_t t = ntt->n / 2;
@@ -275,7 +279,7 @@ void vkhel_vector_forward_transform(struct vkhel_vector *operand,
 			vulkan_ctx_execution_begin(&ctx->vk, &execution);
 			vulkan_kernel_nttfwdbutterfly_record(&ctx->vk,
 					&ctx->vk.kernels[VULKAN_KERNEL_TYPE_NTTFWDBUTTERFLY],
-					&execution, ntt, ntt->q, W, t, offset, operand, operand);
+					&execution, ntt, ntt->q, W, t, offset, input, result);
 			vulkan_ctx_execution_end(&ctx->vk, &execution, execution_fence);
 			vkWaitForFences(ctx->vk.device, 1, &execution_fence, true, -1);
 			vkResetFences(ctx->vk.device, 1, &execution_fence);
@@ -286,17 +290,22 @@ void vkhel_vector_forward_transform(struct vkhel_vector *operand,
 		}
 
 		t /= 2;
+		input = result;
 	}
 
 	vkDestroyFence(ctx->vk.device, execution_fence, NULL);
 }
 
 void vkhel_vector_inverse_transform(struct vkhel_vector *operand,
+		struct vkhel_vector *result,
 		struct vkhel_ntt_tables *ntt) {
+	assert(operand->ctx == result->ctx);
 	struct vkhel_ctx *ctx = operand->ctx;
 
 	VkFence execution_fence;
 	vulkan_ctx_create_fence(&ctx->vk, &execution_fence, false);
+
+	struct vkhel_vector *input = operand;
 
 	struct vulkan_execution execution;
 	uint64_t t = 1;
@@ -308,7 +317,7 @@ void vkhel_vector_inverse_transform(struct vkhel_vector *operand,
 			vulkan_ctx_execution_begin(&ctx->vk, &execution);
 			vulkan_kernel_nttrevbutterfly_record(&ctx->vk,
 					&ctx->vk.kernels[VULKAN_KERNEL_TYPE_NTTREVBUTTERFLY],
-					&execution, ntt, ntt->q, W, t, offset, operand, operand);
+					&execution, ntt, ntt->q, W, t, offset, input, result);
 			vulkan_ctx_execution_end(&ctx->vk, &execution, execution_fence);
 
 			vkWaitForFences(ctx->vk.device, 1, &execution_fence, true, -1);
@@ -320,6 +329,7 @@ void vkhel_vector_inverse_transform(struct vkhel_vector *operand,
 		}
 
 		t *= 2;
+		input = result;
 	}
 
 	/* need to adjust all elements by inv(N) */
@@ -328,7 +338,7 @@ void vkhel_vector_inverse_transform(struct vkhel_vector *operand,
 	vulkan_ctx_execution_begin(&ctx->vk, &execution);
 	vulkan_kernel_elemmulconst_record(&ctx->vk, 
 			&ctx->vk.kernels[VULKAN_KERNEL_TYPE_ELEMMULCONST],
-			&execution, operand, operand, inv_n, ntt->q);
+			&execution, result, result, inv_n, ntt->q);
 	vulkan_ctx_execution_end(&ctx->vk, &execution, execution_fence);
 
 	vkWaitForFences(ctx->vk.device, 1, &execution_fence, true, -1);

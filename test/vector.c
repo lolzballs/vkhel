@@ -251,10 +251,12 @@ void test_forward_transform() {
 	struct vkhel_vector *a = vkhel_vector_create(g_ctx, vector_len);
 	vkhel_vector_copy_from_host(a, operand);
 
-	vkhel_vector_forward_transform(a, ntt_tables);
-	assert_vector_contents_equal(a, expected, vector_len);
+	struct vkhel_vector *b = vkhel_vector_create(g_ctx, vector_len);
+	vkhel_vector_forward_transform(a, b, ntt_tables);
+	assert_vector_contents_equal(b, expected, vector_len);
 
 	vkhel_vector_destroy(a);
+	vkhel_vector_destroy(b);
 
 	vkhel_ntt_tables_destroy(ntt_tables);
 }
@@ -270,10 +272,12 @@ void test_inverse_transform() {
 	struct vkhel_vector *a = vkhel_vector_create(g_ctx, vector_len);
 	vkhel_vector_copy_from_host(a, operand);
 
-	vkhel_vector_inverse_transform(a, ntt_tables);
-	assert_vector_contents_equal(a, expected, vector_len);
+	struct vkhel_vector *b = vkhel_vector_create(g_ctx, vector_len);
+	vkhel_vector_inverse_transform(a, b, ntt_tables);
+	assert_vector_contents_equal(b, expected, vector_len);
 
 	vkhel_vector_destroy(a);
+	vkhel_vector_destroy(b);
 
 	vkhel_ntt_tables_destroy(ntt_tables);
 }

@@ -144,7 +144,9 @@ void vkhel_vector_unmap(struct vkhel_vector *vector) {
 	vkUnmapMemory(vector->ctx->vk.device, vector->memory);
 }
 
-void vkhel_vector_elemfma(struct vkhel_vector *a, struct vkhel_vector *b,
+void vkhel_vector_elemfma(
+		const struct vkhel_vector *a,
+		const struct vkhel_vector *b,
 		struct vkhel_vector *result, uint64_t multiplier, uint64_t mod) {
 	assert(a->ctx == b->ctx && b->ctx == result->ctx);
 	struct vkhel_ctx *ctx = a->ctx;
@@ -165,7 +167,8 @@ void vkhel_vector_elemfma(struct vkhel_vector *a, struct vkhel_vector *b,
 	vkDestroyDescriptorPool(ctx->vk.device, execution.descriptor_pool, NULL);
 }
 
-void vkhel_vector_elemmod(struct vkhel_vector *operand,
+void vkhel_vector_elemmod(
+		const struct vkhel_vector *operand,
 		struct vkhel_vector *result, uint64_t mod, uint64_t q) {
 	assert(operand->ctx == result->ctx);
 	struct vkhel_ctx *ctx = operand->ctx;
@@ -194,7 +197,9 @@ void vkhel_vector_elemmod(struct vkhel_vector *operand,
 	vkDestroyDescriptorPool(ctx->vk.device, execution.descriptor_pool, NULL);
 }
 
-void vkhel_vector_elemmul(struct vkhel_vector *a, struct vkhel_vector *b,
+void vkhel_vector_elemmul(
+		const struct vkhel_vector *a,
+		const struct vkhel_vector *b,
 		struct vkhel_vector *result, uint64_t mod) {
 	assert(a->ctx == b->ctx && b->ctx == result->ctx);
 	struct vkhel_ctx *ctx = a->ctx;
@@ -215,7 +220,8 @@ void vkhel_vector_elemmul(struct vkhel_vector *a, struct vkhel_vector *b,
 	vkDestroyDescriptorPool(ctx->vk.device, execution.descriptor_pool, NULL);
 }
 
-void vkhel_vector_elemgtadd(struct vkhel_vector *operand,
+void vkhel_vector_elemgtadd(
+		const struct vkhel_vector *operand,
 		struct vkhel_vector *result, uint64_t bound, uint64_t diff) {
 	assert(operand->ctx == result->ctx);
 	struct vkhel_ctx *ctx = result->ctx;
@@ -236,7 +242,8 @@ void vkhel_vector_elemgtadd(struct vkhel_vector *operand,
 	vkDestroyDescriptorPool(ctx->vk.device, execution.descriptor_pool, NULL);
 }
 
-void vkhel_vector_elemgtsub(struct vkhel_vector *operand,
+void vkhel_vector_elemgtsub(
+		const struct vkhel_vector *operand,
 		struct vkhel_vector *result,
 		uint64_t bound, uint64_t diff, uint64_t mod) {
 	assert(operand->ctx == result->ctx);
@@ -258,7 +265,8 @@ void vkhel_vector_elemgtsub(struct vkhel_vector *operand,
 	vkDestroyDescriptorPool(ctx->vk.device, execution.descriptor_pool, NULL);
 }
 
-void vkhel_vector_forward_transform(struct vkhel_vector *operand,
+void vkhel_vector_forward_transform(
+		const struct vkhel_vector *operand,
 		struct vkhel_vector *result,
 		struct vkhel_ntt_tables *ntt) {
 	assert(operand->ctx == result->ctx);
@@ -267,7 +275,7 @@ void vkhel_vector_forward_transform(struct vkhel_vector *operand,
 	VkFence execution_fence;
 	vulkan_ctx_create_fence(&ctx->vk, &execution_fence, false);
 
-	struct vkhel_vector *input = operand;
+	const struct vkhel_vector *input = operand;
 
 	struct vulkan_execution execution;
 	uint64_t t = ntt->n / 2;
@@ -296,7 +304,8 @@ void vkhel_vector_forward_transform(struct vkhel_vector *operand,
 	vkDestroyFence(ctx->vk.device, execution_fence, NULL);
 }
 
-void vkhel_vector_inverse_transform(struct vkhel_vector *operand,
+void vkhel_vector_inverse_transform(
+		const struct vkhel_vector *operand,
 		struct vkhel_vector *result,
 		struct vkhel_ntt_tables *ntt) {
 	assert(operand->ctx == result->ctx);
@@ -305,7 +314,7 @@ void vkhel_vector_inverse_transform(struct vkhel_vector *operand,
 	VkFence execution_fence;
 	vulkan_ctx_create_fence(&ctx->vk, &execution_fence, false);
 
-	struct vkhel_vector *input = operand;
+	const struct vkhel_vector *input = operand;
 
 	struct vulkan_execution execution;
 	uint64_t t = 1;

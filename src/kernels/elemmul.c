@@ -94,7 +94,8 @@ void vulkan_kernel_elemmul_record(
 		struct vulkan_kernel *kernel,
 		struct vulkan_execution *execution,
 		struct vkhel_vector *result,
-		struct vkhel_vector *a, struct vkhel_vector *b, uint64_t mod) {
+		const struct vkhel_vector *a, const struct vkhel_vector *b,
+		uint64_t mod) {
 	VkResult res = VK_ERROR_UNKNOWN;
 
 	VkDescriptorSet descriptor_set;

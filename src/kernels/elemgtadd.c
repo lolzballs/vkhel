@@ -90,7 +90,7 @@ void vulkan_kernel_elemgtadd_record(
 		struct vulkan_ctx *vk,
 		struct vulkan_kernel *kernel,
 		struct vulkan_execution *execution,
-		struct vkhel_vector *result, struct vkhel_vector *operand,
+		struct vkhel_vector *result, const struct vkhel_vector *operand,
 		uint64_t bound, uint64_t diff) {
 	VkResult res = VK_ERROR_UNKNOWN;
 

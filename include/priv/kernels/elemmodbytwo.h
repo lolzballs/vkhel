@@ -14,7 +14,7 @@ void vulkan_kernel_elemmodbytwo_record(
 		struct vulkan_kernel *kernel,
 		struct vulkan_execution *execution,
 		struct vkhel_vector *result,
-		struct vkhel_vector *operand,
+		const struct vkhel_vector *operand,
 		uint64_t signed_bound);
 
 #endif

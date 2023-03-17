@@ -173,6 +173,10 @@ void vkhel_vector_elemmod(
 	assert(operand->ctx == result->ctx);
 	struct vkhel_ctx *ctx = operand->ctx;
 
+	printf("elemmod mod: %" PRIu64 ", q: %" PRIu64 "\n", mod, q);
+	printf("\toperand: ");
+	vkhel_vector_dbgprint(operand);
+
 	VkFence execution_fence;
 	vulkan_ctx_create_fence(&ctx->vk, &execution_fence, false);
 
@@ -195,6 +199,9 @@ void vkhel_vector_elemmod(
 	vkDestroyFence(ctx->vk.device, execution_fence, NULL);
 
 	vkDestroyDescriptorPool(ctx->vk.device, execution.descriptor_pool, NULL);
+
+	printf("\tresult: ");
+	vkhel_vector_dbgprint(result);
 }
 
 void vkhel_vector_elemmul(
@@ -203,6 +210,12 @@ void vkhel_vector_elemmul(
 		struct vkhel_vector *result, uint64_t mod) {
 	assert(a->ctx == b->ctx && b->ctx == result->ctx);
 	struct vkhel_ctx *ctx = a->ctx;
+
+	printf("elemmul mod: %" PRIu64 "\n", mod);
+	printf("\ta: ");
+	vkhel_vector_dbgprint(a);
+	printf("\tb: ");
+	vkhel_vector_dbgprint(b);
 
 	VkFence execution_fence;
 	vulkan_ctx_create_fence(&ctx->vk, &execution_fence, false);
@@ -218,6 +231,9 @@ void vkhel_vector_elemmul(
 	vkDestroyFence(ctx->vk.device, execution_fence, NULL);
 
 	vkDestroyDescriptorPool(ctx->vk.device, execution.descriptor_pool, NULL);
+
+	printf("\tresult: ");
+	vkhel_vector_dbgprint(result);
 }
 
 void vkhel_vector_elemgtadd(
@@ -272,6 +288,14 @@ void vkhel_vector_forward_transform(
 	assert(operand->ctx == result->ctx);
 	struct vkhel_ctx *ctx = operand->ctx;
 
+	printf("forward transform ("
+				"degree: %" PRIu64
+				" mod: %" PRIu64
+				" omega: %" PRIu64 ")\n",
+				ntt->n, ntt->q, ntt->w);
+	printf("\toperand: ");
+	vkhel_vector_dbgprint(operand);
+
 	VkFence execution_fence;
 	vulkan_ctx_create_fence(&ctx->vk, &execution_fence, false);
 
@@ -302,6 +326,9 @@ void vkhel_vector_forward_transform(
 	}
 
 	vkDestroyFence(ctx->vk.device, execution_fence, NULL);
+
+	printf("\tresult: ");
+	vkhel_vector_dbgprint(result);
 }
 
 void vkhel_vector_inverse_transform(
@@ -310,6 +337,14 @@ void vkhel_vector_inverse_transform(
 		struct vkhel_ntt_tables *ntt) {
 	assert(operand->ctx == result->ctx);
 	struct vkhel_ctx *ctx = operand->ctx;
+
+	printf("inverse transform ("
+				"degree: %" PRIu64
+				" mod: %" PRIu64
+				" omega: %" PRIu64 ")\n",
+				ntt->n, ntt->q, ntt->w);
+	printf("\toperand: ");
+	vkhel_vector_dbgprint(operand);
 
 	VkFence execution_fence;
 	vulkan_ctx_create_fence(&ctx->vk, &execution_fence, false);
@@ -355,4 +390,7 @@ void vkhel_vector_inverse_transform(
 	vkDestroyDescriptorPool(ctx->vk.device, execution.descriptor_pool, NULL);
 
 	vkDestroyFence(ctx->vk.device, execution_fence, NULL);
+
+	printf("\tresult: ");
+	vkhel_vector_dbgprint(operand);
 }

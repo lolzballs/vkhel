@@ -3,8 +3,12 @@
 
 layout(local_size_x = 64) in;
 
-layout(binding = 0) buffer operand_buffer {
+layout(binding = 0) readonly buffer input_buffer {
 	uint64_t operand[];
+};
+
+layout(binding = 1) writeonly buffer output_buffer {
+	uint64_t result[];
 };
 
 layout(push_constant) uniform constants {
@@ -27,11 +31,10 @@ void main() {
 	const int64_t Y = int64_t(operand[yidx]);
 	
 	const int64_t WY = int64_t((twiddle_factor * Y) % mod);
-	operand[xidx] = (X + WY) % mod;
+	result[xidx] = (X + WY) % mod;
 	int64_t temp_y = X - WY;
 	while (temp_y < 0) {
 		temp_y += int64_t(mod);
 	}
-	operand[yidx] = temp_y % mod;
-
+	result[yidx] = temp_y % mod;
 }

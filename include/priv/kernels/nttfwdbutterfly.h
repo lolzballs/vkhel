@@ -17,6 +17,7 @@ void vulkan_kernel_nttfwdbutterfly_record(
 		struct vkhel_ntt_tables *ntt,
 		uint64_t mod, uint64_t root_of_unity,
 		uint64_t transform_size, uint64_t offset,
-		struct vkhel_vector *operand);
+		struct vkhel_vector *operand,
+		struct vkhel_vector *result);
 
 #endif

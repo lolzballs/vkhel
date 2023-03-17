@@ -179,7 +179,7 @@ void vkhel_vector_elemmod(struct vkhel_vector *operand,
 	if (mod == 2) {
 		vulkan_kernel_elemmodbytwo_record(&ctx->vk,
 				&ctx->vk.kernels[VULKAN_KERNEL_TYPE_ELEMMODBYTWO], &execution,
-				result, operand);
+				result, operand, UINT64_MAX);
 	} else {
 		vulkan_kernel_elemmulconst_record(&ctx->vk,
 				&ctx->vk.kernels[VULKAN_KERNEL_TYPE_ELEMMULCONST], &execution,

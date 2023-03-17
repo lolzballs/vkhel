@@ -13,6 +13,7 @@ layout(binding = 1) writeonly buffer output_buffer {
 
 layout(push_constant) uniform constants {
 	uint64_t length;
+	uint64_t signed_bound;
 };
 
 void main() {
@@ -21,5 +22,6 @@ void main() {
     }
 
     uint pos = gl_GlobalInvocationID.x;
-	result[pos] = vec[pos] & 1;
+	uint64_t unsigned_mod = vec[pos] & 1;
+	result[pos] = (vec[pos] > signed_bound) ? (1 - unsigned_mod) : unsigned_mod;
 }

@@ -6,6 +6,7 @@
 
 struct push_constants {
 	uint64_t length;
+	uint64_t signed_bound;
 };
 
 static const VkPushConstantRange push_constants_range = {
@@ -90,7 +91,8 @@ void vulkan_kernel_elemmodbytwo_record(
 		struct vulkan_kernel *kernel,
 		struct vulkan_execution *execution,
 		struct vkhel_vector *result,
-		struct vkhel_vector *operand) {
+		struct vkhel_vector *operand,
+		uint64_t signed_bound) {
 	VkResult res = VK_ERROR_UNKNOWN;
 
 	VkDescriptorSet descriptor_set;
@@ -148,6 +150,7 @@ void vulkan_kernel_elemmodbytwo_record(
 
 	const struct push_constants push = {
 		.length = result->length,
+		.signed_bound = signed_bound,
 	};
 	vkCmdPushConstants(execution->cmd_buffer, kernel->pipeline_layout,
 			VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(struct push_constants),

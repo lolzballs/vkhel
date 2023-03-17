@@ -308,7 +308,7 @@ void vkhel_vector_inverse_transform(struct vkhel_vector *operand,
 			vulkan_ctx_execution_begin(&ctx->vk, &execution);
 			vulkan_kernel_nttrevbutterfly_record(&ctx->vk,
 					&ctx->vk.kernels[VULKAN_KERNEL_TYPE_NTTREVBUTTERFLY],
-					&execution, ntt, ntt->q, W, t, offset, operand);
+					&execution, ntt, ntt->q, W, t, offset, operand, operand);
 			vulkan_ctx_execution_end(&ctx->vk, &execution, execution_fence);
 
 			vkWaitForFences(ctx->vk.device, 1, &execution_fence, true, -1);

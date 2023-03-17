@@ -31,6 +31,12 @@ static const VkDescriptorSetLayoutBinding descriptor_bindings[] = {
 		.descriptorCount = 1,
 		.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
 	},
+	{
+		.binding = 1,
+		.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+		.descriptorCount = 1,
+		.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
+	},
 };
 
 static const VkDescriptorSetLayoutCreateInfo descriptor_set_create_info = {
@@ -87,7 +93,8 @@ void vulkan_kernel_nttrevbutterfly_record(
 		struct vkhel_ntt_tables *ntt,
 		uint64_t mod, uint64_t root_of_unity,
 		uint64_t transform_size, uint64_t offset,
-		struct vkhel_vector *operand) {
+		struct vkhel_vector *operand,
+		struct vkhel_vector *result) {
 	VkResult res = VK_ERROR_UNKNOWN;
 
 	VkDescriptorSet descriptor_set;
@@ -112,6 +119,21 @@ void vulkan_kernel_nttrevbutterfly_record(
 			.pBufferInfo = (const VkDescriptorBufferInfo[]) {
 				{
 					.buffer = operand->buffer,
+					.offset = offset * sizeof(uint64_t),
+					.range = 2 * transform_size * sizeof(uint64_t),
+				},
+			},
+		},
+		{
+			.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+			.dstSet = descriptor_set,
+			.dstBinding = 1,
+			.dstArrayElement = 0,
+			.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+			.descriptorCount = 1,
+			.pBufferInfo = (const VkDescriptorBufferInfo[]) {
+				{
+					.buffer = result->buffer,
 					.offset = offset * sizeof(uint64_t),
 					.range = 2 * transform_size * sizeof(uint64_t),
 				},

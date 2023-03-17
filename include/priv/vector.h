@@ -14,6 +14,6 @@ struct vkhel_vector {
 	size_t length;
 };
 
-void vkhel_vector_dbgprint(struct vkhel_vector *);
+void vkhel_vector_dbgprint(const struct vkhel_vector *);
 
 #endif

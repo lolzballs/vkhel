@@ -62,7 +62,7 @@ void vkhel_vector_destroy(struct vkhel_vector *vector) {
 	free(vector);
 }
 
-void vkhel_vector_dbgprint(struct vkhel_vector *vector) {
+void vkhel_vector_dbgprint(const struct vkhel_vector *vector) {
 	struct vkhel_ctx *ctx = vector->ctx;
 
 	uint64_t *mapped = NULL;

@@ -119,7 +119,7 @@ void vulkan_kernel_elemgtsub_record(
 			.descriptorCount = 1,
 			.pBufferInfo = (const VkDescriptorBufferInfo[]) {
 				{
-					.buffer = operand->buffer,
+					.buffer = operand->device.buffer,
 					.offset = 0,
 					.range = operand->length * sizeof(uint64_t),
 				},
@@ -134,7 +134,7 @@ void vulkan_kernel_elemgtsub_record(
 			.descriptorCount = 1,
 			.pBufferInfo = (const VkDescriptorBufferInfo[]) {
 				{
-					.buffer = result->buffer,
+					.buffer = result->device.buffer,
 					.offset = 0,
 					.range = result->length * sizeof(uint64_t),
 				},

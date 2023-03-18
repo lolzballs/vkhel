@@ -13,7 +13,7 @@ static struct vkhel_ctx *g_ctx;
 static void assert_vector_contents_equal(struct vkhel_vector *vec,
 		const uint64_t *contents, size_t length) {
 	uint64_t *mapped;
-	vkhel_vector_map(vec, (void **) &mapped, length);
+	vkhel_vector_map(vec, (void **) &mapped, sizeof(uint64_t) * length);
 	for (size_t i = 0; i < length; i++) {
 		assert(mapped[i] == contents[i]);
 	}

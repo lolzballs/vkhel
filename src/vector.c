@@ -15,6 +15,108 @@
 #include "priv/vkhel.h"
 #include "priv/vector.h"
 
+static VkResult allocate_backing_memory(struct vulkan_ctx *vk,
+		uint64_t memory_index, uint64_t size, struct backing_memory *memory) {
+	VkResult res = VK_ERROR_UNKNOWN;
+
+	VkBufferCreateInfo create_info = {
+		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+		.flags = 0,
+		.size = size,
+		.usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
+			| VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT
+			| VK_BUFFER_USAGE_TRANSFER_SRC_BIT
+			| VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+		.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+		.queueFamilyIndexCount = 1,
+		.pQueueFamilyIndices = &vk->queue_family_index,
+	};
+	res = vkCreateBuffer(vk->device, &create_info, NULL, &memory->buffer);
+	if (res != VK_SUCCESS) {
+		return res;
+	}
+
+	VkMemoryRequirements memory_requirements;
+	vkGetBufferMemoryRequirements(vk->device, memory->buffer,
+			&memory_requirements);
+
+	VkMemoryAllocateInfo allocate_info = {
+		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+		.allocationSize = memory_requirements.size,
+		.memoryTypeIndex = memory_index,
+	};
+	res = vkAllocateMemory(vk->device, &allocate_info, NULL, &memory->memory);
+	if (res != VK_SUCCESS) {
+		return res;
+	}
+
+	return vkBindBufferMemory(vk->device, memory->buffer, memory->memory, 0);
+}
+
+static void deallocate_backing_memory(struct vulkan_ctx *vk,
+		struct backing_memory *memory) {
+	vkDestroyBuffer(vk->device, memory->buffer, NULL);
+	vkFreeMemory(vk->device, memory->memory, NULL);
+}
+
+static VkResult copy_buffers(struct vulkan_ctx *vk, size_t size,
+		VkBuffer from, VkBuffer to) {
+	VkResult res;
+
+	VkFence fence;
+	vulkan_ctx_create_fence(vk, &fence, false);
+
+	VkCommandBuffer cmd_buffer;
+	VkCommandBufferAllocateInfo allocate_info = {
+		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+		.commandPool = vk->cmd_pool,
+		.commandBufferCount = 1,
+		.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+	};
+	res = vkAllocateCommandBuffers(vk->device, &allocate_info, &cmd_buffer);
+	if (res != VK_SUCCESS) {
+		return res;
+	}
+
+	VkCommandBufferBeginInfo begin_info = {
+		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+		.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+	};
+	res = vkBeginCommandBuffer(cmd_buffer, &begin_info);
+	if (res != VK_SUCCESS) {
+		return res;
+	}
+
+	VkBufferCopy region = {
+		.srcOffset = 0,
+		.dstOffset = 0,
+		.size = size,
+	};
+	vkCmdCopyBuffer(cmd_buffer, from, to, 1, &region);
+
+	res = vkEndCommandBuffer(cmd_buffer);
+	if (res != VK_SUCCESS) {
+		return res;
+	}
+
+	VkSubmitInfo submit = {
+		.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+		.commandBufferCount = 1,
+		.pCommandBuffers = &cmd_buffer,
+	};
+	res = vkQueueSubmit(vk->queue, 1, &submit, fence);
+	if (res != VK_SUCCESS) {
+		return res;
+	}
+
+	vkWaitForFences(vk->device, 1, &fence, true, -1);
+	vkDestroyFence(vk->device, fence, NULL);
+
+	vkFreeCommandBuffers(vk->device, vk->cmd_pool, 1, &cmd_buffer);
+
+	return res;
+}
+
 struct vkhel_vector *vkhel_vector_create(struct vkhel_ctx *ctx, 
 		uint64_t length) {
 	struct vkhel_vector *ini = calloc(1, sizeof(struct vkhel_vector));
@@ -23,57 +125,29 @@ struct vkhel_vector *vkhel_vector_create(struct vkhel_ctx *ctx,
 
 	VkResult res;
 
-	VkBufferCreateInfo create_info = {
-		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-		.flags = 0,
-		.size = length * sizeof(uint64_t),
-		.usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
-			| VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT
-			| VK_BUFFER_USAGE_TRANSFER_SRC_BIT
-			| VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-		.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-		.queueFamilyIndexCount = 1,
-		.pQueueFamilyIndices = &ctx->vk.queue_family_index,
-	};
-	res = vkCreateBuffer(ctx->vk.device, &create_info, NULL, &ini->buffer);
+	res = allocate_backing_memory(&ctx->vk, ctx->vk.device_local_memory_index,
+			length * sizeof(uint64_t), &ini->device);
 	assert(res == VK_SUCCESS);
-
-	VkMemoryRequirements memory_requirements;
-	vkGetBufferMemoryRequirements(ctx->vk.device, ini->buffer,
-			&memory_requirements);
-
-	VkMemoryAllocateInfo allocate_info = {
-		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-		.allocationSize = memory_requirements.size,
-		.memoryTypeIndex = ctx->vk.host_visible_memory_index,
-	};
-	res = vkAllocateMemory(ctx->vk.device, &allocate_info, NULL, &ini->memory);
-	assert(res == VK_SUCCESS);
-
-	vkBindBufferMemory(ctx->vk.device, ini->buffer, ini->memory, 0);
 
 	return ini;
 }
 
 void vkhel_vector_destroy(struct vkhel_vector *vector) {
 	struct vkhel_ctx *ctx = vector->ctx;
-	vkDestroyBuffer(ctx->vk.device, vector->buffer, NULL);
-	vkFreeMemory(ctx->vk.device, vector->memory, NULL);
+	deallocate_backing_memory(&ctx->vk, &vector->device);
 	free(vector);
 }
 
 void vkhel_vector_dbgprint(const struct vkhel_vector *vector) {
-	struct vkhel_ctx *ctx = vector->ctx;
-
 	uint64_t *mapped = NULL;
-	vkMapMemory(ctx->vk.device, vector->memory, 0,
-			vector->length * sizeof(uint64_t), 0, (void **) &mapped);
+	vkhel_vector_map((struct vkhel_vector *) vector, (void **) &mapped,
+			vector->length * sizeof(uint64_t));
 	for (size_t i = 0; i < vector->length; i++) {
 		printf((i == vector->length - 1) ? ("%" PRIu64) : ("%" PRIu64 ", "),
 				mapped[i]);
 	}
 	printf("\n");
-	vkUnmapMemory(ctx->vk.device, vector->memory);
+	vkhel_vector_unmap((struct vkhel_vector *) vector);
 }
 
 struct vkhel_vector *vkhel_vector_dup(struct vkhel_vector *src) {
@@ -81,67 +155,45 @@ struct vkhel_vector *vkhel_vector_dup(struct vkhel_vector *src) {
 
 	struct vkhel_ctx *ctx = src->ctx;
 	struct vkhel_vector *new = vkhel_vector_create(src->ctx, src->length);
-
-	VkFence fence;
-	vulkan_ctx_create_fence(&ctx->vk, &fence, false);
-
-	VkCommandBuffer cmd_buffer;
-	VkCommandBufferAllocateInfo allocate_info = {
-		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-		.commandPool = ctx->vk.cmd_pool,
-		.commandBufferCount = 1,
-		.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-	};
-	res = vkAllocateCommandBuffers(ctx->vk.device, &allocate_info, &cmd_buffer);
+	res = copy_buffers(&ctx->vk, src->length * sizeof(uint64_t),
+			src->device.buffer, new->device.buffer);
 	assert(res == VK_SUCCESS);
-
-	VkCommandBufferBeginInfo begin_info = {
-		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-		.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
-	};
-	res = vkBeginCommandBuffer(cmd_buffer, &begin_info);
-	assert(res == VK_SUCCESS);
-
-	VkBufferCopy region = {
-		.srcOffset = 0,
-		.dstOffset = 0,
-		.size = src->length * sizeof(uint64_t),
-	};
-	vkCmdCopyBuffer(cmd_buffer, src->buffer, new->buffer, 1, &region);
-
-	res = vkEndCommandBuffer(cmd_buffer);
-	assert(res == VK_SUCCESS);
-
-	VkSubmitInfo submit = {
-		.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-		.commandBufferCount = 1,
-		.pCommandBuffers = &cmd_buffer,
-	};
-	res = vkQueueSubmit(ctx->vk.queue, 1, &submit, fence);
-
-	vkWaitForFences(ctx->vk.device, 1, &fence, true, -1);
-	vkDestroyFence(ctx->vk.device, fence, NULL);
-
-	vkFreeCommandBuffers(ctx->vk.device, ctx->vk.cmd_pool, 1, &cmd_buffer);
 	return new;
 }
 
 void vkhel_vector_copy_from_host(struct vkhel_vector *vector,
 		const uint64_t *e) {
 	uint64_t *mapped;
-	vkhel_vector_map(vector, (void **) &mapped, vector->length);
+	vkhel_vector_map(vector, (void **) &mapped, vector->length * sizeof(uint64_t));
 	memcpy(mapped, e, vector->length * sizeof(uint64_t));
 	vkhel_vector_unmap(vector);
 }
 
 void vkhel_vector_map(struct vkhel_vector *vector, void **mem, size_t size) {
 	VkResult res = VK_ERROR_UNKNOWN;
-	res = vkMapMemory(vector->ctx->vk.device, vector->memory, 0, size, 0, mem);
+	res = allocate_backing_memory(&vector->ctx->vk,
+			vector->ctx->vk.host_visible_memory_index, size, &vector->host);
+	assert(res == VK_SUCCESS);
+
+	res = copy_buffers(&vector->ctx->vk, size,
+			vector->device.buffer, vector->host.buffer);
+	assert(res == VK_SUCCESS);
+
+	res = vkMapMemory(vector->ctx->vk.device, vector->host.memory,
+			0, size, 0, mem);
 	assert(res == VK_SUCCESS);
 }
 
 void vkhel_vector_unmap(struct vkhel_vector *vector) {
-	vkUnmapMemory(vector->ctx->vk.device, vector->memory);
+	VkResult res = VK_ERROR_UNKNOWN;
+
+	vkUnmapMemory(vector->ctx->vk.device, vector->host.memory);
+
+	res = copy_buffers(&vector->ctx->vk, vector->length * sizeof(uint64_t),
+			vector->host.buffer, vector->device.buffer);
+	assert(res == VK_SUCCESS);
+
+	deallocate_backing_memory(&vector->ctx->vk, &vector->host);
 }
 
 void vkhel_vector_elemfma(

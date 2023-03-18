@@ -119,12 +119,12 @@ void vulkan_kernel_elemfma_record(
 			.descriptorCount = 2,
 			.pBufferInfo = (const VkDescriptorBufferInfo[]) {
 				{
-					.buffer = a->buffer,
+					.buffer = a->device.buffer,
 					.offset = 0,
 					.range = a->length * sizeof(uint64_t),
 				},
 				{
-					.buffer = b->buffer,
+					.buffer = b->device.buffer,
 					.offset = 0,
 					.range = b->length * sizeof(uint64_t),
 				},
@@ -139,7 +139,7 @@ void vulkan_kernel_elemfma_record(
 			.descriptorCount = 1,
 			.pBufferInfo = (const VkDescriptorBufferInfo[]) {
 				{
-					.buffer = result->buffer,
+					.buffer = result->device.buffer,
 					.offset = 0,
 					.range = result->length * sizeof(uint64_t),
 				},

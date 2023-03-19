@@ -24,7 +24,10 @@ endif
 
 subdir('src/kernels/shaders')
 
-vkhel_deps = [dep_vulkan]
+vma_proj = subproject('vulkan-memory-allocator')
+vma_dep = vma_proj.get_variable('dep')
+
+vkhel_deps = [dep_vulkan, vma_dep]
 vkhel_incs = include_directories('include/vkhel')
 vkhel_priv_incs = [vkhel_incs, include_directories('include')]
 install_headers('include/vkhel/vkhel.h')

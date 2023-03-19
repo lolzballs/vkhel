@@ -178,6 +178,14 @@ struct vulkan_ctx *vulkan_ctx_init(struct vulkan_ctx *ini) {
 	ini->host_visible_memory_index = find_memory_index(&ini->memory_properties,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
+	VmaAllocatorCreateInfo allocator_create_info = {
+		.physicalDevice = ini->physical_device,
+		.device = ini->device,
+		.instance = ini->instance,
+	};
+	res = vmaCreateAllocator(&allocator_create_info, &ini->mem_allocator);
+	assert(res == VK_SUCCESS);
+
 	VkCommandPoolCreateInfo cmd_pool_create_info = {
 		.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
 		.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT,
@@ -200,6 +208,8 @@ void vulkan_ctx_finish(struct vulkan_ctx *ctx) {
 	}
 
 	vkDestroyCommandPool(ctx->device, ctx->cmd_pool, NULL);
+
+	vmaDestroyAllocator(ctx->mem_allocator);
 
     ctx->queue = VK_NULL_HANDLE;
     ctx->physical_device = VK_NULL_HANDLE;

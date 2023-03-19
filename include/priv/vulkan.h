@@ -2,7 +2,7 @@
 #define PRIV_VULKAN_H
 
 #include <stdbool.h>
-#include <vulkan/vulkan.h>
+#include <vk_mem_alloc.h>
 
 struct vulkan_ctx;
 
@@ -41,6 +41,7 @@ struct vulkan_ctx {
 	VkPhysicalDeviceMemoryProperties memory_properties;
 	uint32_t host_visible_memory_index;
 	uint32_t device_local_memory_index;
+	VmaAllocator mem_allocator;
 
 	VkCommandPool cmd_pool;
 	struct vulkan_kernel kernels[VULKAN_KERNEL_TYPE_MAX];

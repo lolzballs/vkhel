@@ -2,12 +2,12 @@
 #define PRIV_VECTOR_H
 
 #include <stdlib.h>
-#include <vulkan/vulkan.h>
+#include <vk_mem_alloc.h>
 
 struct vkhel_ctx;
 
 struct backing_memory {
-	VkDeviceMemory memory;
+	VmaAllocation allocation;
 	VkBuffer buffer;
 };
 

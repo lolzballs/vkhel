@@ -15,48 +15,78 @@
 #include "priv/vkhel.h"
 #include "priv/vector.h"
 
+enum backing_memory_usage {
+	BACKING_MEMORY_USAGE_GPU,
+	BACKING_MEMORY_USAGE_TRANSFER,
+	BACKING_MEMORY_USAGE_TRANSFER_SRC,
+	BACKING_MEMORY_USAGE_TRANSFER_DST,
+};
+
+static VkBufferUsageFlags get_buffer_usage_flags(
+		enum backing_memory_usage usage) {
+	switch (usage) {
+		case BACKING_MEMORY_USAGE_GPU:
+			return VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
+				| VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT
+				| VK_BUFFER_USAGE_TRANSFER_SRC_BIT
+				| VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+		case BACKING_MEMORY_USAGE_TRANSFER:
+			return VK_BUFFER_USAGE_TRANSFER_SRC_BIT
+				| VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+		case BACKING_MEMORY_USAGE_TRANSFER_SRC:
+			return VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+		case BACKING_MEMORY_USAGE_TRANSFER_DST:
+			return VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+	}
+	assert(false);
+}
+
+static VmaAllocationCreateFlags get_allocation_create_flags(
+		enum backing_memory_usage usage) {
+	switch (usage) {
+		case BACKING_MEMORY_USAGE_GPU:
+			return 0;
+		case BACKING_MEMORY_USAGE_TRANSFER_SRC:
+			return VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT
+				| VMA_ALLOCATION_CREATE_MAPPED_BIT;
+		case BACKING_MEMORY_USAGE_TRANSFER:
+		case BACKING_MEMORY_USAGE_TRANSFER_DST:
+			return VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT
+				| VMA_ALLOCATION_CREATE_MAPPED_BIT;
+	}
+	assert(false);
+}
+
 static VkResult allocate_backing_memory(struct vulkan_ctx *vk,
-		uint64_t memory_index, uint64_t size, struct backing_memory *memory) {
+		enum backing_memory_usage usage, uint64_t size,
+		struct backing_memory *memory) {
 	VkResult res = VK_ERROR_UNKNOWN;
 
 	VkBufferCreateInfo create_info = {
 		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
 		.flags = 0,
 		.size = size,
-		.usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
-			| VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT
-			| VK_BUFFER_USAGE_TRANSFER_SRC_BIT
-			| VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+		.usage = get_buffer_usage_flags(usage),
 		.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-		.queueFamilyIndexCount = 1,
-		.pQueueFamilyIndices = &vk->queue_family_index,
 	};
-	res = vkCreateBuffer(vk->device, &create_info, NULL, &memory->buffer);
+	VmaAllocationCreateInfo alloc_create_info = {
+		.usage = (usage == BACKING_MEMORY_USAGE_GPU 
+				? VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE
+				: VMA_MEMORY_USAGE_AUTO_PREFER_HOST),
+		.flags = get_allocation_create_flags(usage),
+	};
+	res = vmaCreateBuffer(vk->mem_allocator, &create_info, &alloc_create_info,
+			&memory->buffer, &memory->allocation, NULL);
 	if (res != VK_SUCCESS) {
 		return res;
 	}
 
-	VkMemoryRequirements memory_requirements;
-	vkGetBufferMemoryRequirements(vk->device, memory->buffer,
-			&memory_requirements);
-
-	VkMemoryAllocateInfo allocate_info = {
-		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-		.allocationSize = memory_requirements.size,
-		.memoryTypeIndex = memory_index,
-	};
-	res = vkAllocateMemory(vk->device, &allocate_info, NULL, &memory->memory);
-	if (res != VK_SUCCESS) {
-		return res;
-	}
-
-	return vkBindBufferMemory(vk->device, memory->buffer, memory->memory, 0);
+	return res;
 }
 
 static void deallocate_backing_memory(struct vulkan_ctx *vk,
 		struct backing_memory *memory) {
-	vkDestroyBuffer(vk->device, memory->buffer, NULL);
-	vkFreeMemory(vk->device, memory->memory, NULL);
+	vmaDestroyBuffer(vk->mem_allocator, memory->buffer, memory->allocation);
 }
 
 static VkResult copy_buffers(struct vulkan_ctx *vk, size_t size,
@@ -125,7 +155,7 @@ struct vkhel_vector *vkhel_vector_create(struct vkhel_ctx *ctx,
 
 	VkResult res;
 
-	res = allocate_backing_memory(&ctx->vk, ctx->vk.device_local_memory_index,
+	res = allocate_backing_memory(&ctx->vk, BACKING_MEMORY_USAGE_GPU,
 			length * sizeof(uint64_t), &ini->device);
 	assert(res == VK_SUCCESS);
 
@@ -172,22 +202,23 @@ void vkhel_vector_copy_from_host(struct vkhel_vector *vector,
 void vkhel_vector_map(struct vkhel_vector *vector, void **mem, size_t size) {
 	VkResult res = VK_ERROR_UNKNOWN;
 	res = allocate_backing_memory(&vector->ctx->vk,
-			vector->ctx->vk.host_visible_memory_index, size, &vector->host);
+			BACKING_MEMORY_USAGE_TRANSFER, size, &vector->host);
 	assert(res == VK_SUCCESS);
 
 	res = copy_buffers(&vector->ctx->vk, size,
 			vector->device.buffer, vector->host.buffer);
 	assert(res == VK_SUCCESS);
 
-	res = vkMapMemory(vector->ctx->vk.device, vector->host.memory,
-			0, size, 0, mem);
+	res = vmaMapMemory(vector->ctx->vk.mem_allocator,
+			vector->host.allocation, mem);
 	assert(res == VK_SUCCESS);
 }
 
 void vkhel_vector_unmap(struct vkhel_vector *vector) {
 	VkResult res = VK_ERROR_UNKNOWN;
 
-	vkUnmapMemory(vector->ctx->vk.device, vector->host.memory);
+	vmaUnmapMemory(vector->ctx->vk.mem_allocator,
+			vector->host.allocation);
 
 	res = copy_buffers(&vector->ctx->vk, vector->length * sizeof(uint64_t),
 			vector->host.buffer, vector->device.buffer);

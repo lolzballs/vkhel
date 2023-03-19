@@ -143,6 +143,8 @@ static VkResult copy_buffers(struct vulkan_ctx *vk, size_t size,
 	vkDestroyFence(vk->device, fence, NULL);
 
 	vkFreeCommandBuffers(vk->device, vk->cmd_pool, 1, &cmd_buffer);
+	vkResetCommandPool(vk->device, vk->cmd_pool,
+			VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT);
 
 	return res;
 }
@@ -260,6 +262,11 @@ void vkhel_vector_elemfma(
 
 	vkDestroyDescriptorPool(ctx->vk.device, execution.descriptor_pool, NULL);
 
+	vkFreeCommandBuffers(ctx->vk.device, ctx->vk.cmd_pool, 1,
+			&execution.cmd_buffer);
+	vkResetCommandPool(ctx->vk.device, ctx->vk.cmd_pool,
+			VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT);
+
 #ifdef VKHEL_DEBUG
 	printf("\tresult: ");
 	vkhel_vector_dbgprint(result);
@@ -301,6 +308,11 @@ void vkhel_vector_elemmod(
 
 	vkDestroyDescriptorPool(ctx->vk.device, execution.descriptor_pool, NULL);
 
+	vkFreeCommandBuffers(ctx->vk.device, ctx->vk.cmd_pool, 1,
+			&execution.cmd_buffer);
+	vkResetCommandPool(ctx->vk.device, ctx->vk.cmd_pool,
+			VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT);
+
 #ifdef VKHEL_DEBUG
 	printf("\tresult: ");
 	vkhel_vector_dbgprint(result);
@@ -337,6 +349,11 @@ void vkhel_vector_elemmul(
 
 	vkDestroyDescriptorPool(ctx->vk.device, execution.descriptor_pool, NULL);
 
+	vkFreeCommandBuffers(ctx->vk.device, ctx->vk.cmd_pool, 1,
+			&execution.cmd_buffer);
+	vkResetCommandPool(ctx->vk.device, ctx->vk.cmd_pool,
+			VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT);
+
 #ifdef VKHEL_DEBUG
 	printf("\tresult: ");
 	vkhel_vector_dbgprint(result);
@@ -372,6 +389,11 @@ void vkhel_vector_elemgtadd(
 	vkDestroyFence(ctx->vk.device, execution_fence, NULL);
 
 	vkDestroyDescriptorPool(ctx->vk.device, execution.descriptor_pool, NULL);
+
+	vkFreeCommandBuffers(ctx->vk.device, ctx->vk.cmd_pool, 1,
+			&execution.cmd_buffer);
+	vkResetCommandPool(ctx->vk.device, ctx->vk.cmd_pool,
+			VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT);
 
 #ifdef VKHEL_DEBUG
 	printf("\tresult: ");
@@ -410,6 +432,11 @@ void vkhel_vector_elemgtsub(
 	vkDestroyFence(ctx->vk.device, execution_fence, NULL);
 
 	vkDestroyDescriptorPool(ctx->vk.device, execution.descriptor_pool, NULL);
+
+	vkFreeCommandBuffers(ctx->vk.device, ctx->vk.cmd_pool, 1,
+			&execution.cmd_buffer);
+	vkResetCommandPool(ctx->vk.device, ctx->vk.cmd_pool,
+			VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT);
 
 #ifdef VKHEL_DEBUG
 	printf("\tresult: ");
@@ -453,6 +480,11 @@ void vkhel_vector_forward_transform(
 			vulkan_ctx_execution_end(&ctx->vk, &execution, execution_fence);
 			vkWaitForFences(ctx->vk.device, 1, &execution_fence, true, -1);
 			vkResetFences(ctx->vk.device, 1, &execution_fence);
+
+			vkFreeCommandBuffers(ctx->vk.device, ctx->vk.cmd_pool, 1,
+					&execution.cmd_buffer);
+			vkResetCommandPool(ctx->vk.device, ctx->vk.cmd_pool,
+					VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT);
 
 			vkDestroyDescriptorPool(ctx->vk.device, execution.descriptor_pool, NULL);
 
@@ -511,6 +543,11 @@ void vkhel_vector_inverse_transform(
 
 			vkDestroyDescriptorPool(ctx->vk.device, execution.descriptor_pool, NULL);
 
+			vkFreeCommandBuffers(ctx->vk.device, ctx->vk.cmd_pool, 1,
+					&execution.cmd_buffer);
+			vkResetCommandPool(ctx->vk.device, ctx->vk.cmd_pool,
+					VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT);
+
 			offset += t * 2;
 		}
 
@@ -529,7 +566,13 @@ void vkhel_vector_inverse_transform(
 
 	vkWaitForFences(ctx->vk.device, 1, &execution_fence, true, -1);
 	vkResetFences(ctx->vk.device, 1, &execution_fence);
+
 	vkDestroyDescriptorPool(ctx->vk.device, execution.descriptor_pool, NULL);
+
+	vkFreeCommandBuffers(ctx->vk.device, ctx->vk.cmd_pool, 1,
+			&execution.cmd_buffer);
+	vkResetCommandPool(ctx->vk.device, ctx->vk.cmd_pool,
+			VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT);
 
 	vkDestroyFence(ctx->vk.device, execution_fence, NULL);
 

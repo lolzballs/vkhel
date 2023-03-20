@@ -317,7 +317,7 @@ void vkhel_vector_elemfma(
 	vulkan_ctx_create_fence(&ctx->vk, &execution_fence, false);
 
 	struct vulkan_execution execution;
-	vulkan_ctx_execution_begin(&ctx->vk, &execution);
+	vulkan_ctx_execution_begin(&ctx->vk, &execution, 1);
 	vulkan_kernel_elemfma_record(&ctx->vk,
 			&ctx->vk.kernels[VULKAN_KERNEL_TYPE_ELEMFMA], &execution,
 			result, a, b, multiplier, mod);
@@ -355,7 +355,7 @@ void vkhel_vector_elemmod(
 	vulkan_ctx_create_fence(&ctx->vk, &execution_fence, false);
 
 	struct vulkan_execution execution;
-	vulkan_ctx_execution_begin(&ctx->vk, &execution);
+	vulkan_ctx_execution_begin(&ctx->vk, &execution, 1);
 
 	if (mod == 2) {
 		vulkan_kernel_elemmodbytwo_record(&ctx->vk,
@@ -404,7 +404,7 @@ void vkhel_vector_elemmul(
 	vulkan_ctx_create_fence(&ctx->vk, &execution_fence, false);
 
 	struct vulkan_execution execution;
-	vulkan_ctx_execution_begin(&ctx->vk, &execution);
+	vulkan_ctx_execution_begin(&ctx->vk, &execution, 1);
 	vulkan_kernel_elemmul_record(&ctx->vk,
 			&ctx->vk.kernels[VULKAN_KERNEL_TYPE_ELEMMUL], &execution,
 			result, a, b, mod);
@@ -445,7 +445,7 @@ void vkhel_vector_elemgtadd(
 	vulkan_ctx_create_fence(&ctx->vk, &execution_fence, false);
 
 	struct vulkan_execution execution;
-	vulkan_ctx_execution_begin(&ctx->vk, &execution);
+	vulkan_ctx_execution_begin(&ctx->vk, &execution, 1);
 	vulkan_kernel_elemgtadd_record(&ctx->vk,
 			&ctx->vk.kernels[VULKAN_KERNEL_TYPE_ELEMGTADD], &execution,
 			result, operand, bound, diff);
@@ -488,7 +488,7 @@ void vkhel_vector_elemgtsub(
 	vulkan_ctx_create_fence(&ctx->vk, &execution_fence, false);
 
 	struct vulkan_execution execution;
-	vulkan_ctx_execution_begin(&ctx->vk, &execution);
+	vulkan_ctx_execution_begin(&ctx->vk, &execution, 1);
 	vulkan_kernel_elemgtsub_record(&ctx->vk,
 			&ctx->vk.kernels[VULKAN_KERNEL_TYPE_ELEMGTSUB], &execution,
 			result, operand, bound, diff, mod);
@@ -539,7 +539,7 @@ void vkhel_vector_forward_transform(
 		for (size_t i = 0; i < m; i++) {
 			const uint64_t W = ntt->roots_of_unity[m + i];
 
-			vulkan_ctx_execution_begin(&ctx->vk, &execution);
+			vulkan_ctx_execution_begin(&ctx->vk, &execution, 1);
 			vulkan_kernel_nttfwdbutterfly_record(&ctx->vk,
 					&ctx->vk.kernels[VULKAN_KERNEL_TYPE_NTTFWDBUTTERFLY],
 					&execution, ntt, ntt->q, W, t, offset, input, result);
@@ -598,7 +598,7 @@ void vkhel_vector_inverse_transform(
 		for (size_t i = 0; i < m; i++) {
 			const uint64_t W = ntt->inv_roots_of_unity[m + i];
 
-			vulkan_ctx_execution_begin(&ctx->vk, &execution);
+			vulkan_ctx_execution_begin(&ctx->vk, &execution, 1);
 			vulkan_kernel_nttrevbutterfly_record(&ctx->vk,
 					&ctx->vk.kernels[VULKAN_KERNEL_TYPE_NTTREVBUTTERFLY],
 					&execution, ntt, ntt->q, W, t, offset, input, result);
@@ -624,7 +624,7 @@ void vkhel_vector_inverse_transform(
 	/* need to adjust all elements by inv(N) */
 	const uint64_t inv_n = nt_inverse_mod(ntt->n, ntt->q);
 
-	vulkan_ctx_execution_begin(&ctx->vk, &execution);
+	vulkan_ctx_execution_begin(&ctx->vk, &execution, 1);
 	vulkan_kernel_elemmulconst_record(&ctx->vk, 
 			&ctx->vk.kernels[VULKAN_KERNEL_TYPE_ELEMMULCONST],
 			&execution, result, result, inv_n, ntt->q);

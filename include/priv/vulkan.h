@@ -52,7 +52,7 @@ void vulkan_ctx_finish(struct vulkan_ctx *ctx);
 void vulkan_ctx_create_fence(struct vulkan_ctx *vk, VkFence *fence,
 		bool signaled);
 void vulkan_ctx_execution_begin(struct vulkan_ctx *vk,
-		struct vulkan_execution *execution);
+		struct vulkan_execution *execution, size_t set_count);
 void vulkan_ctx_execution_end(struct vulkan_ctx *vk,
 		struct vulkan_execution *execution, VkFence fence);
 

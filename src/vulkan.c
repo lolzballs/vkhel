@@ -234,7 +234,7 @@ void vulkan_ctx_create_fence(struct vulkan_ctx *vk, VkFence *fence,
 }
 
 void vulkan_ctx_execution_begin(struct vulkan_ctx *vk,
-		struct vulkan_execution *execution) {
+		struct vulkan_execution *execution, size_t set_count) {
 	VkResult res = VK_ERROR_UNKNOWN;
 
 	VkCommandBufferAllocateInfo cmd_buffer_allocate_info = {
@@ -250,11 +250,11 @@ void vulkan_ctx_execution_begin(struct vulkan_ctx *vk,
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info = {
 		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
 		.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
-		.maxSets = 1,
+		.maxSets = set_count,
 		.poolSizeCount = 1,
 		.pPoolSizes = &(const VkDescriptorPoolSize) {
 			.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-			.descriptorCount = 3,
+			.descriptorCount = 3 * set_count,
 		},
 	};
 	res = vkCreateDescriptorPool(vk->device, &descriptor_pool_create_info,

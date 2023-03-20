@@ -149,8 +149,67 @@ static VkResult copy_buffers(struct vulkan_ctx *vk, size_t size,
 	return res;
 }
 
-struct vkhel_vector *vkhel_vector_create(struct vkhel_ctx *ctx, 
+static VkResult clear_buffer(struct vulkan_ctx *vk, VkBuffer buffer) {
+	VkResult res;
+
+	VkFence fence;
+	vulkan_ctx_create_fence(vk, &fence, false);
+
+	VkCommandBuffer cmd_buffer;
+	VkCommandBufferAllocateInfo allocate_info = {
+		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+		.commandPool = vk->cmd_pool,
+		.commandBufferCount = 1,
+		.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+	};
+	res = vkAllocateCommandBuffers(vk->device, &allocate_info, &cmd_buffer);
+	if (res != VK_SUCCESS) {
+		return res;
+	}
+
+	VkCommandBufferBeginInfo begin_info = {
+		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+		.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+	};
+	res = vkBeginCommandBuffer(cmd_buffer, &begin_info);
+	if (res != VK_SUCCESS) {
+		return res;
+	}
+
+	vkCmdFillBuffer(cmd_buffer, buffer, 0, VK_WHOLE_SIZE, 0x00000000);
+
+	res = vkEndCommandBuffer(cmd_buffer);
+	if (res != VK_SUCCESS) {
+		return res;
+	}
+
+	VkSubmitInfo submit = {
+		.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+		.commandBufferCount = 1,
+		.pCommandBuffers = &cmd_buffer,
+	};
+	res = vkQueueSubmit(vk->queue, 1, &submit, fence);
+	if (res != VK_SUCCESS) {
+		return res;
+	}
+
+	vkWaitForFences(vk->device, 1, &fence, true, -1);
+	vkDestroyFence(vk->device, fence, NULL);
+
+	vkFreeCommandBuffers(vk->device, vk->cmd_pool, 1, &cmd_buffer);
+	vkResetCommandPool(vk->device, vk->cmd_pool,
+			VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT);
+
+	return res;
+}
+
+struct vkhel_vector *vkhel_vector_create(struct vkhel_ctx *ctx,
 		uint64_t length) {
+	return vkhel_vector_create2(ctx, length, true);
+}
+
+struct vkhel_vector *vkhel_vector_create2(struct vkhel_ctx *ctx, 
+		uint64_t length, bool zero) {
 	struct vkhel_vector *ini = calloc(1, sizeof(struct vkhel_vector));
 	ini->ctx = ctx;
 	ini->length = length;
@@ -160,6 +219,11 @@ struct vkhel_vector *vkhel_vector_create(struct vkhel_ctx *ctx,
 	res = allocate_backing_memory(&ctx->vk, BACKING_MEMORY_USAGE_GPU,
 			length * sizeof(uint64_t), &ini->device);
 	assert(res == VK_SUCCESS);
+
+	if (zero) {
+		res = clear_buffer(&ctx->vk, ini->device.buffer);
+		assert(res == VK_SUCCESS);
+	}
 
 	return ini;
 }
@@ -186,7 +250,9 @@ struct vkhel_vector *vkhel_vector_dup(struct vkhel_vector *src) {
 	VkResult res;
 
 	struct vkhel_ctx *ctx = src->ctx;
-	struct vkhel_vector *new = vkhel_vector_create(src->ctx, src->length);
+	/* zero-initialization not required because it is about to be initialized */
+	struct vkhel_vector *new = vkhel_vector_create2(src->ctx,
+			src->length, false);
 	res = copy_buffers(&ctx->vk, src->length * sizeof(uint64_t),
 			src->device.buffer, new->device.buffer);
 	assert(res == VK_SUCCESS);

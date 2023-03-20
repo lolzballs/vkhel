@@ -1,6 +1,7 @@
 #ifndef VKHEL_H
 #define VKHEL_H
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -15,6 +16,8 @@ void vkhel_ntt_tables_destroy(struct vkhel_ntt_tables *);
 
 struct vkhel_vector;
 struct vkhel_vector *vkhel_vector_create(struct vkhel_ctx *, uint64_t length);
+struct vkhel_vector *vkhel_vector_create2(struct vkhel_ctx *, uint64_t length,
+		bool zero);
 void vkhel_vector_destroy(struct vkhel_vector *);
 struct vkhel_vector *vkhel_vector_dup(struct vkhel_vector *);
 void vkhel_vector_copy_from_host(struct vkhel_vector *, const uint64_t *);

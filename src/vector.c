@@ -536,26 +536,27 @@ void vkhel_vector_forward_transform(
 	uint64_t t = ntt->n / 2;
 	for (uint64_t m = 1; m < ntt->n; m *= 2) {
 		uint64_t offset = 0;
+
+		vulkan_ctx_execution_begin(&ctx->vk, &execution, m);
 		for (size_t i = 0; i < m; i++) {
 			const uint64_t W = ntt->roots_of_unity[m + i];
 
-			vulkan_ctx_execution_begin(&ctx->vk, &execution, 1);
 			vulkan_kernel_nttfwdbutterfly_record(&ctx->vk,
 					&ctx->vk.kernels[VULKAN_KERNEL_TYPE_NTTFWDBUTTERFLY],
 					&execution, ntt, ntt->q, W, t, offset, input, result);
-			vulkan_ctx_execution_end(&ctx->vk, &execution, execution_fence);
-			vkWaitForFences(ctx->vk.device, 1, &execution_fence, true, -1);
-			vkResetFences(ctx->vk.device, 1, &execution_fence);
-
-			vkFreeCommandBuffers(ctx->vk.device, ctx->vk.cmd_pool, 1,
-					&execution.cmd_buffer);
-			vkResetCommandPool(ctx->vk.device, ctx->vk.cmd_pool,
-					VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT);
-
-			vkDestroyDescriptorPool(ctx->vk.device, execution.descriptor_pool, NULL);
 
 			offset += t * 2;
 		}
+		vulkan_ctx_execution_end(&ctx->vk, &execution, execution_fence);
+		vkWaitForFences(ctx->vk.device, 1, &execution_fence, true, -1);
+		vkResetFences(ctx->vk.device, 1, &execution_fence);
+
+		vkFreeCommandBuffers(ctx->vk.device, ctx->vk.cmd_pool, 1,
+				&execution.cmd_buffer);
+		vkResetCommandPool(ctx->vk.device, ctx->vk.cmd_pool,
+				VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT);
+
+		vkDestroyDescriptorPool(ctx->vk.device, execution.descriptor_pool, NULL);
 
 		t /= 2;
 		input = result;
@@ -595,27 +596,28 @@ void vkhel_vector_inverse_transform(
 	uint64_t t = 1;
 	for (uint64_t m = ntt->n / 2; m >= 1; m /= 2) {
 		uint64_t offset = 0;
+
+		vulkan_ctx_execution_begin(&ctx->vk, &execution, m);
 		for (size_t i = 0; i < m; i++) {
 			const uint64_t W = ntt->inv_roots_of_unity[m + i];
 
-			vulkan_ctx_execution_begin(&ctx->vk, &execution, 1);
 			vulkan_kernel_nttrevbutterfly_record(&ctx->vk,
 					&ctx->vk.kernels[VULKAN_KERNEL_TYPE_NTTREVBUTTERFLY],
 					&execution, ntt, ntt->q, W, t, offset, input, result);
-			vulkan_ctx_execution_end(&ctx->vk, &execution, execution_fence);
-
-			vkWaitForFences(ctx->vk.device, 1, &execution_fence, true, -1);
-			vkResetFences(ctx->vk.device, 1, &execution_fence);
-
-			vkDestroyDescriptorPool(ctx->vk.device, execution.descriptor_pool, NULL);
-
-			vkFreeCommandBuffers(ctx->vk.device, ctx->vk.cmd_pool, 1,
-					&execution.cmd_buffer);
-			vkResetCommandPool(ctx->vk.device, ctx->vk.cmd_pool,
-					VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT);
-
 			offset += t * 2;
 		}
+
+		vulkan_ctx_execution_end(&ctx->vk, &execution, execution_fence);
+
+		vkWaitForFences(ctx->vk.device, 1, &execution_fence, true, -1);
+		vkResetFences(ctx->vk.device, 1, &execution_fence);
+
+		vkDestroyDescriptorPool(ctx->vk.device, execution.descriptor_pool, NULL);
+
+		vkFreeCommandBuffers(ctx->vk.device, ctx->vk.cmd_pool, 1,
+				&execution.cmd_buffer);
+		vkResetCommandPool(ctx->vk.device, ctx->vk.cmd_pool,
+				VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT);
 
 		t *= 2;
 		input = result;

@@ -80,6 +80,7 @@ static VkResult create_vulkan_instance(VkInstance *instance) {
         .pApplicationInfo = &application_info,
     };
 
+#ifdef VKHEL_DEBUG
     const char *validation_layer = "VK_LAYER_KHRONOS_validation";
     bool validation_layer_present = false;
     for (uint32_t layer = 0; layer < layer_count; layer++) {
@@ -96,6 +97,7 @@ static VkResult create_vulkan_instance(VkInstance *instance) {
     } else {
         fprintf(stderr, "warning: validation layer is not present\n");
     }
+#endif
 
 	create_info.enabledExtensionCount = 0;
 	create_info.ppEnabledExtensionNames = NULL;

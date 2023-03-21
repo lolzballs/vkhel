@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include "priv/ntt_tables.h"
@@ -40,6 +41,25 @@ static void compute_roots_of_unity_powers(struct vkhel_ntt_tables *ntt) {
 			nt_compute_barrett_factor(ntt->inv_roots_of_unity[i],
 					ntt->q, nt_ceil_log2(ntt->q));
 	}
+}
+
+void vkhel_ntt_tables_dbgprint(struct vkhel_ntt_tables *ntt) {
+	printf("ntt_tables: (n=%" PRIu64 " q=%" PRIu64 " w=%" PRIu64 ")\n",
+			ntt->n, ntt->q, ntt->w);
+
+	printf("\troots_of_unity: ");
+	for (uint64_t i = 0; i < ntt->n; i++) {
+		printf((i == ntt->n - 1) ? ("%" PRIu64) : ("%" PRIu64 ", "),
+				ntt->roots_of_unity[i]);
+	}
+	printf("\n");
+
+	printf("\tinv_roots_of_unity: ");
+	for (uint64_t i = 0; i < ntt->n; i++) {
+		printf((i == ntt->n - 1) ? ("%" PRIu64) : ("%" PRIu64 ", "),
+				ntt->inv_roots_of_unity[i]);
+	}
+	printf("\n");
 }
 
 struct vkhel_ntt_tables *vkhel_ntt_tables_create(uint64_t n,

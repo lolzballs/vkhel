@@ -14,4 +14,6 @@ struct vkhel_ntt_tables {
 	uint64_t *inv_roots_barrett_factors;
 };
 
+void vkhel_ntt_tables_dbgprint(struct vkhel_ntt_tables *);
+
 #endif

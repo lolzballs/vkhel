@@ -556,6 +556,11 @@ void vkhel_vector_forward_transform(
 
 		vkDestroyDescriptorPool(ctx->vk.device, execution.descriptor_pool, NULL);
 
+#ifdef VKHEL_DEBUG
+		printf("\t\tm=%" PRIu64 " result: ", m);
+		vkhel_vector_dbgprint(result);
+#endif
+
 		t /= 2;
 		input = result;
 	}
@@ -614,6 +619,11 @@ void vkhel_vector_inverse_transform(
 				&execution.cmd_buffer);
 		vkResetCommandPool(ctx->vk.device, ctx->vk.cmd_pool,
 				VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT);
+
+#ifdef VKHEL_DEBUG
+		printf("\t\tm=%" PRIu64 " result: ", m);
+		vkhel_vector_dbgprint(result);
+#endif
 
 		t *= 2;
 		input = result;

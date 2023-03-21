@@ -282,6 +282,52 @@ void test_inverse_transform() {
 	vkhel_ntt_tables_destroy(ntt_tables);
 }
 
+void test_forward_transform_big() {
+	const uint64_t elements_len = 16;
+	const uint64_t elements[16] = {
+		2251799813685306, 2251799813685310, 2251799813685308, 2251799813685312, 2251799813685311, 0, 2251799813685302, 2251799813685310, 2251799813685312, 2251799813685310, 2, 2251799813685311, 0, 2251799813685309, 2251799813685311, 2251799813685306,
+	};
+	const uint64_t expected[16] = {
+		610434879442967, 613666103418554, 2249249381734859, 2053490208846177, 1522677317362741, 1551865907717647, 270569269564721, 1037126332549088, 1045941308259958, 1600925533406968, 1522209320066420, 282301763365150, 1026564520130301, 2172754229003974, 87881069444854, 366741365168013,
+	};
+
+	struct vkhel_ntt_tables *ntt = vkhel_ntt_tables_create(
+		elements_len, /* degree */
+		2251799813685313, /* modulus */
+		110968848420801 /* omega */
+	);
+
+	struct vkhel_vector *vec = vkhel_vector_create2(g_ctx, elements_len, false);
+	vkhel_vector_copy_from_host(vec, elements);
+	vkhel_vector_forward_transform(vec, vec, ntt);
+	assert_vector_contents_equal(vec, expected, elements_len);
+	vkhel_vector_destroy(vec);
+	vkhel_ntt_tables_destroy(ntt);
+}
+
+void test_inverse_transform_big() {
+	const uint64_t elements_len = 16;
+	const uint64_t elements[16] = {
+		610434879442967, 613666103418554, 2249249381734859, 2053490208846177, 1522677317362741, 1551865907717647, 270569269564721, 1037126332549088, 1045941308259958, 1600925533406968, 1522209320066420, 282301763365150, 1026564520130301, 2172754229003974, 87881069444854, 366741365168013,
+	};
+	const uint64_t expected[16] = {
+		2251799813685306, 2251799813685310, 2251799813685308, 2251799813685312, 2251799813685311, 0, 2251799813685302, 2251799813685310, 2251799813685312, 2251799813685310, 2, 2251799813685311, 0, 2251799813685309, 2251799813685311, 2251799813685306,
+	};
+
+	struct vkhel_ntt_tables *ntt = vkhel_ntt_tables_create(
+		elements_len, /* degree */
+		2251799813685313, /* modulus */
+		110968848420801 /* omega */
+	);
+
+	struct vkhel_vector *vec = vkhel_vector_create2(g_ctx, elements_len, false);
+	vkhel_vector_copy_from_host(vec, elements);
+	vkhel_vector_inverse_transform(vec, vec, ntt);
+	assert_vector_contents_equal(vec, expected, elements_len);
+	vkhel_vector_destroy(vec);
+	vkhel_ntt_tables_destroy(ntt);
+}
+
 void test_dup() {
 	const size_t vector_len = 64;
 	uint64_t elements[vector_len];
@@ -311,6 +357,8 @@ int main() {
 	RUN_TEST(elemgtsub);
 	RUN_TEST(forward_transform);
 	RUN_TEST(inverse_transform);
+	RUN_TEST(forward_transform_big);
+	RUN_TEST(inverse_transform_big);
 
 	vkhel_ctx_destroy(g_ctx);
 }

@@ -43,7 +43,7 @@ void main() {
 	mul64(vec[pos], barrett_factor, prod_hi);
 	uint64_t product = vec[pos] * b - prod_hi * mod;
 	if (product >= mod)
-		product = mod - product;
+		product = product - mod;
 
 	result[pos] = product;
 }

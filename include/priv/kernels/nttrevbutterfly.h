@@ -15,7 +15,7 @@ void vulkan_kernel_nttrevbutterfly_record(
 		struct vulkan_kernel *kernel,
 		struct vulkan_execution *execution,
 		struct vkhel_ntt_tables *ntt,
-		uint64_t mod, uint64_t root_of_unity,
+		uint64_t mod, uint64_t power,
 		uint64_t transform_size, uint64_t offset,
 		const struct vkhel_vector *operand,
 		struct vkhel_vector *result);

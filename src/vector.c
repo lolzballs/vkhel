@@ -539,11 +539,9 @@ void vkhel_vector_forward_transform(
 
 		vulkan_ctx_execution_begin(&ctx->vk, &execution, m);
 		for (size_t i = 0; i < m; i++) {
-			const uint64_t W = ntt->roots_of_unity[m + i];
-
 			vulkan_kernel_nttfwdbutterfly_record(&ctx->vk,
 					&ctx->vk.kernels[VULKAN_KERNEL_TYPE_NTTFWDBUTTERFLY],
-					&execution, ntt, ntt->q, W, t, offset, input, result);
+					&execution, ntt, ntt->q, m + i, t, offset, input, result);
 
 			offset += t * 2;
 		}
@@ -599,11 +597,9 @@ void vkhel_vector_inverse_transform(
 
 		vulkan_ctx_execution_begin(&ctx->vk, &execution, m);
 		for (size_t i = 0; i < m; i++) {
-			const uint64_t W = ntt->inv_roots_of_unity[m + i];
-
 			vulkan_kernel_nttrevbutterfly_record(&ctx->vk,
 					&ctx->vk.kernels[VULKAN_KERNEL_TYPE_NTTREVBUTTERFLY],
-					&execution, ntt, ntt->q, W, t, offset, input, result);
+					&execution, ntt, ntt->q, m + i, t, offset, input, result);
 			offset += t * 2;
 		}
 

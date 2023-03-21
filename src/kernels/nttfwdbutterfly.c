@@ -9,6 +9,7 @@
 struct push_constants {
 	uint64_t transform_size;
 	uint64_t twiddle_factor;
+	uint64_t barrett_factor; /* barrett factor for multiplying by twiddle */
 	uint64_t mod;
 };
 
@@ -91,7 +92,7 @@ void vulkan_kernel_nttfwdbutterfly_record(
 		struct vulkan_kernel *kernel,
 		struct vulkan_execution *execution,
 		struct vkhel_ntt_tables *ntt,
-		uint64_t mod, uint64_t root_of_unity,
+		uint64_t mod, uint64_t power,
 		uint64_t transform_size, uint64_t offset,
 		const struct vkhel_vector *operand,
 		struct vkhel_vector *result) {
@@ -152,7 +153,8 @@ void vulkan_kernel_nttfwdbutterfly_record(
 
 	const struct push_constants push = {
 		.transform_size = transform_size,
-		.twiddle_factor = root_of_unity,
+		.twiddle_factor = ntt->roots_of_unity[power],
+		.barrett_factor = ntt->roots_barrett_factors[power],
 		.mod = mod,
 	};
 	vkCmdPushConstants(execution->cmd_buffer, kernel->pipeline_layout,

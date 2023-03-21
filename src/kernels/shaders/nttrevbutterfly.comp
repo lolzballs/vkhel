@@ -14,8 +14,19 @@ layout(binding = 1) writeonly buffer output_buffer {
 layout(push_constant) uniform constants {
 	uint64_t transform_size;
 	uint64_t twiddle_factor;
+	uint64_t barrett_factor;
 	uint64_t mod;
 };
+
+void mul64(const uint64_t a, const uint64_t b, out uint64_t hi) {
+	const uint64_t lo_lo = (a & 0xFFFFFFFFu) * (b & 0xFFFFFFFFu);
+	const uint64_t hi_lo = (a >> 32)         * (b & 0xFFFFFFFFu);
+	const uint64_t lo_hi = (a & 0xFFFFFFFFu) * (b >> 32);
+	const uint64_t hi_hi = (a >> 32)         * (b >> 32);
+
+	const uint64_t cross = (lo_lo >> 32) + (hi_lo & 0xFFFFFFFFu) + lo_hi;
+	hi = (hi_lo >> 32) + (cross >> 32) + hi_hi;
+}
 
 void main() {
     if (gl_GlobalInvocationID.x >= transform_size) {
@@ -27,13 +38,21 @@ void main() {
 	const uint xidx = uint(pos);
 	const uint yidx = uint(pos + transform_size);
 
-	int64_t X = int64_t(operand[xidx]);
-	int64_t Y = int64_t(operand[yidx]);
+	const uint64_t X = operand[xidx];
+	const uint64_t Y = operand[yidx];
 	
-	result[xidx] = (X + Y) % mod;
-	int64_t temp_y = X - Y;
-	while (temp_y < 0) {
-		temp_y += int64_t(mod);
+	uint64_t temp_y = X;
+	while (temp_y < Y) {
+		temp_y += mod;
 	}
-	result[yidx] = (twiddle_factor * temp_y) % mod;
+	temp_y -= Y;
+
+	uint64_t WY_hi;
+	mul64(temp_y, barrett_factor, WY_hi);
+	uint64_t WY = temp_y * twiddle_factor - WY_hi * mod;
+	if (WY >= mod)
+		WY = WY - mod;
+
+	result[xidx] = (X + Y) % mod;
+	result[yidx] = WY;
 }

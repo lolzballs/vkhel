@@ -99,8 +99,9 @@ static VkResult create_vulkan_instance(VkInstance *instance) {
     }
 #endif
 
-	create_info.enabledExtensionCount = 0;
-	create_info.ppEnabledExtensionNames = NULL;
+	const char *extensions[] = {};
+	create_info.enabledExtensionCount = sizeof(extensions) / sizeof(const char *);
+	create_info.ppEnabledExtensionNames = extensions;
 
     res = vkCreateInstance(&create_info, NULL, instance);
     if (res != VK_SUCCESS) {
@@ -125,7 +126,9 @@ static VkResult create_vulkan_device(struct vulkan_ctx *ini) {
         .pQueuePriorities = &queue_priority,
     };
 
-	const char *extensions[] = {};
+	const char *extensions[] = {
+		VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+	};
     VkDeviceCreateInfo device_create_info = {
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
         .queueCreateInfoCount = 1,

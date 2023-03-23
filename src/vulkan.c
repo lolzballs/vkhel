@@ -99,8 +99,9 @@ static VkResult create_vulkan_instance(VkInstance *instance) {
     }
 #endif
 
-	create_info.enabledExtensionCount = 0;
-	create_info.ppEnabledExtensionNames = NULL;
+	const char *extensions[] = {};
+	create_info.enabledExtensionCount = sizeof(extensions) / sizeof(const char *);
+	create_info.ppEnabledExtensionNames = extensions;
 
     res = vkCreateInstance(&create_info, NULL, instance);
     if (res != VK_SUCCESS) {

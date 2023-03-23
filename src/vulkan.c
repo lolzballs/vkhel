@@ -125,12 +125,12 @@ static VkResult create_vulkan_device(struct vulkan_ctx *ini) {
         .pQueuePriorities = &queue_priority,
     };
 
-	const char *extensions[] = { };
+	const char *extensions[] = {};
     VkDeviceCreateInfo device_create_info = {
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
         .queueCreateInfoCount = 1,
         .pQueueCreateInfos = &queue_create_info,
-		.enabledExtensionCount = 0,
+		.enabledExtensionCount = sizeof(extensions) / sizeof(const char *),
 		.ppEnabledExtensionNames = extensions,
     };
 

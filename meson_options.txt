@@ -1,0 +1,2 @@
+option('debug_logging', type: 'boolean', value: false,
+  description: 'enables vkhel debug logging')

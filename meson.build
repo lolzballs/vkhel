@@ -18,7 +18,7 @@ sources = files([
   'src/vulkan.c',
 ])
 
-if get_option('debug')
+if get_option('debug_logging')
   add_project_arguments('-DVKHEL_DEBUG', language: 'c')
 endif
 

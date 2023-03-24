@@ -1,5 +1,6 @@
 project('vkhel', 'c')
 
+dep_glfw = dependency('glfw3', required: false)
 dep_vulkan = dependency('vulkan', required: true)
 
 sources = files([
@@ -28,6 +29,16 @@ vma_proj = subproject('vulkan-memory-allocator')
 vma_dep = vma_proj.get_variable('dep')
 
 vkhel_deps = [dep_vulkan, vma_dep]
+
+if get_option('swapchain')
+  if not dep_glfw.found()
+    error('glfw is required if swapchain is enabled')
+  endif
+
+  vkhel_deps += dep_glfw
+  add_project_arguments('-DVKHEL_SWAPCHAIN', language: 'c')
+endif
+
 vkhel_incs = include_directories('include/vkhel')
 vkhel_priv_incs = [vkhel_incs, include_directories('include')]
 install_headers('include/vkhel/vkhel.h')

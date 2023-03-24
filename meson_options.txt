@@ -1,2 +1,4 @@
 option('debug_logging', type: 'boolean', value: false,
   description: 'enables vkhel debug logging')
+option('swapchain', type: 'boolean', value: false,
+  description: 'create a dummy swapchain for profiling captures')

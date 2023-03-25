@@ -1,6 +1,8 @@
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <vulkan/vulkan.h>
 #include "priv/kernels/elemfma.h"
 #include "priv/kernels/elemmodbytwo.h"
 #include "priv/kernels/elemmul.h"
@@ -99,9 +101,8 @@ static VkResult create_vulkan_instance(VkInstance *instance) {
     }
 #endif
 
-	const char *extensions[] = {};
-	create_info.enabledExtensionCount = sizeof(extensions) / sizeof(const char *);
-	create_info.ppEnabledExtensionNames = extensions;
+	create_info.ppEnabledExtensionNames = glfwGetRequiredInstanceExtensions(
+			&create_info.enabledExtensionCount);
 
     res = vkCreateInstance(&create_info, NULL, instance);
     if (res != VK_SUCCESS) {
@@ -118,6 +119,8 @@ static VkResult create_vulkan_device(struct vulkan_ctx *ini) {
 
     /* cast to uint32_t is safe due to assert */
     ini->queue_family_index = (uint32_t) queue_index;
+	assert(glfwGetPhysicalDevicePresentationSupport(ini->instance,
+				ini->physical_device, ini->queue_family_index));
 
     VkDeviceQueueCreateInfo queue_create_info = {
         .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
@@ -152,8 +155,72 @@ static VkResult create_vulkan_device(struct vulkan_ctx *ini) {
     return res;
 }
 
+#ifdef VKHEL_SWAPCHAIN
+static void init_swapchain(struct vulkan_ctx *ini) {
+	VkResult res = VK_ERROR_UNKNOWN;
+
+	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+	ini->window = glfwCreateWindow(1, 1, "vkhel", NULL, NULL);
+
+	res = glfwCreateWindowSurface(ini->instance, ini->window,
+			NULL, &ini->surface);
+	assert(res == VK_SUCCESS);
+
+	VkSurfaceCapabilitiesKHR surface_caps;
+	res = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(ini->physical_device,
+			ini->surface, &surface_caps);
+	assert(res == VK_SUCCESS);
+
+	VkSwapchainCreateInfoKHR create_info = {
+		.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+		.surface = ini->surface,
+		.minImageCount = surface_caps.minImageCount,
+		.imageFormat = VK_FORMAT_B8G8R8A8_SRGB,
+		.imageExtent = surface_caps.minImageExtent,
+		.imageArrayLayers = 1,
+		.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+		.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
+		.queueFamilyIndexCount = 1,
+		.pQueueFamilyIndices = &ini->queue_family_index,
+		.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
+		.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+		.presentMode = VK_PRESENT_MODE_FIFO_KHR,
+		.clipped = false,
+	};
+	res = vkCreateSwapchainKHR(ini->device, &create_info, NULL,
+			&ini->swapchain);
+	assert(res == VK_SUCCESS);
+
+	res = vkGetSwapchainImagesKHR(ini->device, ini->swapchain, &ini->nimages,
+			NULL);
+	assert(res == VK_SUCCESS);
+
+	ini->images = calloc(ini->nimages, sizeof(VkImage));
+	res = vkGetSwapchainImagesKHR(ini->device, ini->swapchain, &ini->nimages,
+			ini->images);
+	assert(res == VK_SUCCESS);
+
+	VkSemaphoreCreateInfo semaphore_create_info = {
+		.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+	};
+	res = vkCreateSemaphore(ini->device, &semaphore_create_info, NULL,
+			&ini->semaphore);
+	assert(res == VK_SUCCESS);
+
+	res = vkCreateSemaphore(ini->device, &semaphore_create_info, NULL,
+			&ini->queue_semaphore);
+	assert(res == VK_SUCCESS);
+}
+#endif
+
 struct vulkan_ctx *vulkan_ctx_init(struct vulkan_ctx *ini) {
     VkResult res = VK_ERROR_UNKNOWN;
+
+	if (!glfwInit()) {
+		fprintf(stderr, "fatal: failed to init glfw\n");
+		exit(-1);
+	}
+	assert(glfwVulkanSupported());
 
     res = create_vulkan_instance(&ini->instance);
     assert(res == VK_SUCCESS);
@@ -204,6 +271,10 @@ struct vulkan_ctx *vulkan_ctx_init(struct vulkan_ctx *ini) {
 		vulkan_kernel_inits[i](ini);
 	}
 
+#ifdef VKHEL_SWAPCHAIN
+	init_swapchain(ini);
+#endif
+
     return ini;
 }
 
@@ -218,6 +289,16 @@ void vulkan_ctx_finish(struct vulkan_ctx *ctx) {
 
     ctx->queue = VK_NULL_HANDLE;
     ctx->physical_device = VK_NULL_HANDLE;
+
+#ifdef VKHEL_SWAPCHAIN
+	vkDestroySemaphore(ctx->device, ctx->semaphore, NULL);
+	vkDestroySemaphore(ctx->device, ctx->queue_semaphore, NULL);
+
+	vkDestroySwapchainKHR(ctx->device, ctx->swapchain, NULL);
+	free(ctx->images);
+	vkDestroySurfaceKHR(ctx->instance, ctx->surface, NULL);
+	glfwTerminate();
+#endif
 
     vkDestroyDevice(ctx->device, NULL);
     ctx->device = VK_NULL_HANDLE;
@@ -276,14 +357,74 @@ void vulkan_ctx_execution_end(struct vulkan_ctx *vk,
 		struct vulkan_execution *execution,
 		VkFence fence) {
 	VkResult res = VK_ERROR_UNKNOWN;
+	static uint32_t i = 0;
+	i++;
+
+#ifdef VKHEL_SWAPCHAIN
+	uint32_t index = -1;
+	if (i == 16) {
+		res = vkAcquireNextImageKHR(vk->device, vk->swapchain, 0, vk->semaphore,
+				NULL, &index);
+		assert(res == VK_SUCCESS || res == VK_NOT_READY);
+	}
+
+	if (index != -1) {
+		VkImageMemoryBarrier image_memory_barrier = {
+			.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+			.srcAccessMask = 0,
+			.dstAccessMask = 0,
+			.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+			.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+			.image = vk->images[index],
+			.subresourceRange = (VkImageSubresourceRange) {
+				.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+				.baseMipLevel = 0,
+				.levelCount = 1,
+				.baseArrayLayer = 0,
+				.layerCount = 1,
+			},
+		};
+		vkCmdPipelineBarrier(execution->cmd_buffer,
+				VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+				VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+				0,
+				0, NULL,
+				0, NULL,
+				1, &image_memory_barrier);
+	}
+#endif
 
 	res = vkEndCommandBuffer(execution->cmd_buffer);
 	assert(res == VK_SUCCESS);
 
+	VkPipelineStageFlags flags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 	VkSubmitInfo submit_info = {
 		.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
 		.commandBufferCount = 1,
 		.pCommandBuffers = &execution->cmd_buffer,
+#ifdef VKHEL_SWAPCHAIN
+		.waitSemaphoreCount = index == -1 ? 0 : 1,
+		.pWaitSemaphores = index == -1 ? NULL : &vk->semaphore,
+		.pWaitDstStageMask = index == -1 ? 0 : &flags,
+		.signalSemaphoreCount = index == -1 ? 0 : 1,
+		.pSignalSemaphores = index == -1 ? NULL : &vk->queue_semaphore,
+#endif
 	};
 	vkQueueSubmit(vk->queue, 1, &submit_info, fence);
+
+#ifdef VKHEL_SWAPCHAIN
+	if (index != -1) {
+		printf("vkQueuePresent\n");
+		const VkPresentInfoKHR present_info = {
+			.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+			.waitSemaphoreCount = 1,
+			.pWaitSemaphores = &vk->queue_semaphore,
+			.swapchainCount = 1,
+			.pSwapchains = &vk->swapchain,
+			.pImageIndices = &index,
+		};
+		res = vkQueuePresentKHR(vk->queue, &present_info);
+		assert(res == VK_SUCCESS);
+	}
+#endif
 }

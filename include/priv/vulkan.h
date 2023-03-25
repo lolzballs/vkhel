@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <vk_mem_alloc.h>
+#include <GLFW/glfw3.h>
 
 struct vulkan_ctx;
 
@@ -45,6 +46,17 @@ struct vulkan_ctx {
 
 	VkCommandPool cmd_pool;
 	struct vulkan_kernel kernels[VULKAN_KERNEL_TYPE_MAX];
+
+#ifdef VKHEL_SWAPCHAIN
+	GLFWwindow *window;
+	VkSurfaceKHR surface;
+	VkSwapchainKHR swapchain;
+	VkSemaphore semaphore;
+	VkSemaphore queue_semaphore;
+
+	uint32_t nimages;
+	VkImage *images;
+#endif
 };
 
 struct vulkan_ctx *vulkan_ctx_init(struct vulkan_ctx *ini);

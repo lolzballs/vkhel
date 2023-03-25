@@ -35,6 +35,7 @@ if get_option('swapchain')
     error('glfw is required if swapchain is enabled')
   endif
 
+  sources += files('src/vulkan_swapchain.c')
   vkhel_deps += dep_glfw
   add_project_arguments('-DVKHEL_SWAPCHAIN', language: 'c')
 endif
